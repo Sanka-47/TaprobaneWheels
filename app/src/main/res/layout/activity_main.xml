@@ -5,8 +5,9 @@
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/md_theme_background"
     tools:context=".activity.MainActivity">
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,7 +18,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:navigationIcon="@drawable/menu_24">
+            android:background="@color/md_theme_primary"
+            app:navigationIcon="@drawable/menu_24"
+            app:navigationIconTint="@color/md_theme_onPrimary">
 
             <EditText
                 android:id="@+id/text_input_search"
@@ -25,13 +28,13 @@
                 android:layout_height="40dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
-                android:hint="@string/search_hint"
+                android:hint="Search alloy wheels..."
                 android:drawableStart="@drawable/search_24"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:textSize="14sp"
+                android:textColorHint="@color/md_theme_outline"
                 android:background="@drawable/custom_input_search" />
-
 
         </com.google.android.material.appbar.MaterialToolbar>
 
@@ -45,22 +48,22 @@
             android:id="@+id/bottom_navigation_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/md_theme_surface"
             app:itemIconSize="25dp"
             app:itemIconTint="@color/nav_item_colors"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/bottom_nav_menu" />
     </LinearLayout>
 
-
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/side_navigation_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:fitsSystemWindows="true"
         app:headerLayout="@layout/side_nav_header"
         app:itemIconSize="25dp"
         app:itemIconTint="@color/nav_item_colors"
         app:menu="@menu/side_nav_menu" />
-
 
 </androidx.drawerlayout.widget.DrawerLayout>
