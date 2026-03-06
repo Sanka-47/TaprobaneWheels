@@ -23,6 +23,17 @@ public class Product {
     private float rating;
     private List<Attribute> attributes;
 
+    public Product(String productId, String title, String description, double price, String categoryId, List<String> images, int stockCount, boolean status) {
+        this.productId = productId;
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.categoryId = categoryId;
+        this.images = images;
+        this.stockCount = stockCount;
+        this.status = status;
+    }
+
     @Data
     @Builder
     @AllArgsConstructor
