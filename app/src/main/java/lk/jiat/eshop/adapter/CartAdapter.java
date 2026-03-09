@@ -17,6 +17,8 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,9 +32,11 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
     private List<CartItem> cartItems;
     private OnQuantityChangeListener changeListener;
     private OnRemoveListener removeListener;
+    private FirebaseStorage storage;
 
     public CartAdapter(List<CartItem> cartItems) {
         this.cartItems = cartItems;
+        this.storage = FirebaseStorage.getInstance();
     }
 
     public void setOnQuantityChangeListener(OnQuantityChangeListener listener) {
@@ -74,10 +78,31 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                     holder.productPrice.setText(String.format(Locale.US, "LKR %,.2f", product.getPrice()));
                     holder.productQuantity.setText(String.valueOf(cartItem.getQuantity()));
 
-                    Glide.with(holder.itemView.getContext())
-                            .load(product.getImages().get(0))
-                            .centerCrop()
-                            .into(holder.productImage);
+                    if (product.getImages() != null && !product.getImages().isEmpty()) {
+                        String imagePath = product.getImages().get(0);
+
+                        if (imagePath.startsWith("http")) {
+                            Glide.with(holder.itemView.getContext())
+                                    .load(imagePath)
+                                    .centerCrop()
+                                    .into(holder.productImage);
+                        } else {
+                            StorageReference storageReference;
+                            if (imagePath.startsWith("gs://")) {
+                                storageReference = storage.getReferenceFromUrl(imagePath);
+                            } else {
+                                storageReference = storage.getReference(imagePath);
+                            }
+
+                            storageReference.getDownloadUrl()
+                                    .addOnSuccessListener(uri -> {
+                                        Glide.with(holder.itemView.getContext())
+                                                .load(uri)
+                                                .centerCrop()
+                                                .into(holder.productImage);
+                                    });
+                        }
+                    }
 
 
                     holder.btnPlus.setOnClickListener(v -> {

@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 
@@ -18,9 +20,11 @@ import lk.jiat.eshop.R;
 public class ProductSliderAdapter extends RecyclerView.Adapter<ProductSliderAdapter.ProductSliderViewHolder> {
 
     private List<String> images;
+    private FirebaseStorage storage;
 
     public ProductSliderAdapter(List<String> images) {
         this.images = images;
+        this.storage = FirebaseStorage.getInstance();
     }
 
     @NonNull
@@ -33,10 +37,31 @@ public class ProductSliderAdapter extends RecyclerView.Adapter<ProductSliderAdap
 
     @Override
     public void onBindViewHolder(@NonNull ProductSliderViewHolder holder, int position) {
-        Glide.with(holder.itemView.getContext())
-                .load(images.get(position))
-                .centerCrop()
-                .into(holder.imageView);
+        String imagePath = images.get(position);
+
+        if (imagePath != null && !imagePath.isEmpty()) {
+            if (imagePath.startsWith("http")) {
+                Glide.with(holder.itemView.getContext())
+                        .load(imagePath)
+                        .centerCrop()
+                        .into(holder.imageView);
+            } else {
+                StorageReference storageReference;
+                if (imagePath.startsWith("gs://")) {
+                    storageReference = storage.getReferenceFromUrl(imagePath);
+                } else {
+                    storageReference = storage.getReference(imagePath);
+                }
+
+                storageReference.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            Glide.with(holder.itemView.getContext())
+                                    .load(uri)
+                                    .centerCrop()
+                                    .into(holder.imageView);
+                        });
+            }
+        }
     }
 
     @Override

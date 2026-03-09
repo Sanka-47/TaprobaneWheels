@@ -12,21 +12,24 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 
 import lk.jiat.eshop.R;
-import lk.jiat.eshop.model.Category;
 import lk.jiat.eshop.model.Product;
 
 public class ListingAdapter extends RecyclerView.Adapter<ListingAdapter.ViewHolder> {
 
     private List<Product> products;
     private OnListingItemClickListener listener;
+    private FirebaseStorage storage;
 
     public ListingAdapter(List<Product> products, OnListingItemClickListener listener) {
         this.products = products;
         this.listener = listener;
+        this.storage = FirebaseStorage.getInstance();
     }
 
     @NonNull
@@ -42,18 +45,40 @@ public class ListingAdapter extends RecyclerView.Adapter<ListingAdapter.ViewHold
     public void onBindViewHolder(@NonNull ListingAdapter.ViewHolder holder, int position) {
         Product product = products.get(position);
         holder.productTitle.setText(product.getTitle());
-        holder.productPrice.setText("LKR "+product.getPrice());
-        Glide.with(holder.itemView.getContext())
-                .load(product.getImages().get(0))
-                .centerCrop()
-                .into(holder.productImage);
+        holder.productPrice.setText("LKR " + product.getPrice());
 
-        holder.itemView.setOnClickListener(v->{
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            String imagePath = product.getImages().get(0);
+
+            if (imagePath.startsWith("http")) {
+                Glide.with(holder.itemView.getContext())
+                        .load(imagePath)
+                        .centerCrop()
+                        .into(holder.productImage);
+            } else {
+                StorageReference storageReference;
+                if (imagePath.startsWith("gs://")) {
+                    storageReference = storage.getReferenceFromUrl(imagePath);
+                } else {
+                    storageReference = storage.getReference(imagePath);
+                }
+
+                storageReference.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            Glide.with(holder.itemView.getContext())
+                                    .load(uri)
+                                    .centerCrop()
+                                    .into(holder.productImage);
+                        });
+            }
+        }
+
+        holder.itemView.setOnClickListener(v -> {
 
             Animation animation = AnimationUtils.loadAnimation(v.getContext(), R.anim.click_animation);
             v.startAnimation(animation);
 
-            if (listener != null){
+            if (listener != null) {
                 listener.onListingItemClick(product);
             }
         });
@@ -64,7 +89,7 @@ public class ListingAdapter extends RecyclerView.Adapter<ListingAdapter.ViewHold
         return products.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView productImage;
         TextView productTitle;
         TextView productPrice;
@@ -77,7 +102,7 @@ public class ListingAdapter extends RecyclerView.Adapter<ListingAdapter.ViewHold
         }
     }
 
-    public interface OnListingItemClickListener{
+    public interface OnListingItemClickListener {
         void onListingItemClick(Product product);
     }
 }

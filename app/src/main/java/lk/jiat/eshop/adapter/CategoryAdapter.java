@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 
@@ -48,17 +49,30 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
         Category category = categories.get(position);
         holder.categoryName.setText(category.getName());
 
-        storage.getReference(category.getImageUrl())
-                .getDownloadUrl()
-                .addOnSuccessListener(uri -> {
+        String imageUrl = category.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            if (imageUrl.startsWith("http")) {
+                Glide.with(holder.itemView.getContext())
+                        .load(imageUrl)
+                        .centerCrop()
+                        .into(holder.categoryImage);
+            } else {
+                StorageReference storageReference;
+                if (imageUrl.startsWith("gs://")) {
+                    storageReference = storage.getReferenceFromUrl(imageUrl);
+                } else {
+                    storageReference = storage.getReference(imageUrl);
+                }
 
-                    //Log.i("LoadImages",uri.toString());
-
-                    Glide.with(holder.itemView.getContext())
-                            .load(uri)
-                            .centerCrop()
-                            .into(holder.categoryImage);
-                });
+                storageReference.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            Glide.with(holder.itemView.getContext())
+                                    .load(uri)
+                                    .centerCrop()
+                                    .into(holder.categoryImage);
+                        });
+            }
+        }
 
 
         holder.itemView.setOnClickListener(v -> {
