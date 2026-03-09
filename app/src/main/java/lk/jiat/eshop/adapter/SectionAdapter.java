@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 
@@ -22,10 +24,12 @@ public class SectionAdapter extends RecyclerView.Adapter<SectionAdapter.ViewHold
 
     private List<Product> products;
     private OnListingItemClickListener listener;
+    private FirebaseStorage storage;
 
     public SectionAdapter(List<Product> products, OnListingItemClickListener listener) {
         this.products = products;
         this.listener = listener;
+        this.storage = FirebaseStorage.getInstance();
     }
 
     @NonNull
@@ -42,10 +46,32 @@ public class SectionAdapter extends RecyclerView.Adapter<SectionAdapter.ViewHold
         Product product = products.get(position);
         holder.productTitle.setText(product.getTitle());
         holder.productPrice.setText("LKR " + product.getPrice());
-        Glide.with(holder.itemView.getContext())
-                .load(product.getImages().get(0))
-                .centerCrop()
-                .into(holder.productImage);
+
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            String imagePath = product.getImages().get(0);
+
+            if (imagePath.startsWith("http")) {
+                Glide.with(holder.itemView.getContext())
+                        .load(imagePath)
+                        .centerCrop()
+                        .into(holder.productImage);
+            } else {
+                StorageReference storageReference;
+                if (imagePath.startsWith("gs://")) {
+                    storageReference = storage.getReferenceFromUrl(imagePath);
+                } else {
+                    storageReference = storage.getReference(imagePath);
+                }
+
+                storageReference.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            Glide.with(holder.itemView.getContext())
+                                    .load(uri)
+                                    .centerCrop()
+                                    .into(holder.productImage);
+                        });
+            }
+        }
 
         holder.itemView.setOnClickListener(v -> {
 
