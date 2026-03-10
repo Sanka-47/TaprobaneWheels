@@ -4,8 +4,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -60,18 +58,25 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull CartAdapter.ViewHolder holder, int position) {
         CartItem cartItem = cartItems.get(position);
 
+        // Reset UI to prevent showing old or default data
+        holder.productTitle.setText("Loading...");
+        holder.productPrice.setText("");
+        holder.productQuantity.setText(String.valueOf(cartItem.getQuantity()));
+        holder.productImage.setImageResource(R.drawable.app_logo); // Using app_logo as placeholder
+        holder.itemView.setVisibility(View.VISIBLE);
+        holder.itemView.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        holder.itemView.getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("products").whereEqualTo("productId", cartItem.getProductId()).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot qds) {
+                int currentPosition = holder.getAbsoluteAdapterPosition();
+                if (currentPosition == RecyclerView.NO_POSITION) {
+                    return;
+                }
+
                 if (!qds.isEmpty()) {
-
-                    int currentPosition = holder.getAbsoluteAdapterPosition();
-                    if (currentPosition == RecyclerView.NO_POSITION) {
-                        return;
-                    }
-
-
                     Product product = qds.getDocuments().get(0).toObject(Product.class);
 
                     holder.productTitle.setText(product.getTitle());
@@ -85,6 +90,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                             Glide.with(holder.itemView.getContext())
                                     .load(imagePath)
                                     .centerCrop()
+                                    .placeholder(R.drawable.app_logo)
                                     .into(holder.productImage);
                         } else {
                             StorageReference storageReference;
@@ -99,6 +105,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                                         Glide.with(holder.itemView.getContext())
                                                 .load(uri)
                                                 .centerCrop()
+                                                .placeholder(R.drawable.app_logo)
                                                 .into(holder.productImage);
                                     });
                         }
@@ -126,16 +133,18 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
 
                     });
 
-
                     holder.btnRemove.setOnClickListener(v -> {
-                        int pos = holder.getAbsoluteAdapterPosition();
-                        Log.i("Position", String.valueOf(pos));
-                        if (pos != RecyclerView.NO_POSITION && removeListener != null) {
+                        if (removeListener != null) {
                             removeListener.onRemoved(currentPosition);
                         }
                     });
 
-
+                } else {
+                    // Product not found in database, hide this item
+                    holder.itemView.setVisibility(View.GONE);
+                    holder.itemView.getLayoutParams().height = 0;
+                    holder.itemView.getLayoutParams().width = 0;
+                    Log.e("CartAdapter", "Product not found for ID: " + cartItem.getProductId());
                 }
             }
         });
