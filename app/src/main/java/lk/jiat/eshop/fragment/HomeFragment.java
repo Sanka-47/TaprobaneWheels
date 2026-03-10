@@ -68,7 +68,16 @@ public class HomeFragment extends Fragment {
 
 
                             SectionAdapter adapter = new SectionAdapter(products, product -> {
+                                Bundle bundle = new Bundle();
+                                bundle.putString("productId", product.getProductId());
 
+                                ProductDetailsFragment productDetailsFragment = new ProductDetailsFragment();
+                                productDetailsFragment.setArguments(bundle);
+
+                                getParentFragmentManager().beginTransaction()
+                                        .replace(R.id.fragment_container, productDetailsFragment)
+                                        .addToBackStack(null)
+                                        .commit();
                             });
 
                             binding.homeTopSellSection.itemSectionTitle.setText("Top Selling Products");
