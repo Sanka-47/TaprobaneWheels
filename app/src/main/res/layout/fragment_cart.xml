@@ -11,14 +11,27 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/cart_empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Your cart is empty"
+        android:textSize="18sp"
+        android:visibility="gone" />
 
 
     <LinearLayout
+        android:id="@+id/cart_checkout_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -39,7 +52,7 @@
                 android:id="@+id/cart_text_total"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="LKR 2500.00"
+                android:text="LKR 0.00"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 

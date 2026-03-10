@@ -34,13 +34,12 @@ import lk.jiat.eshop.model.Product;
 public class CartFragment extends Fragment {
 
     private FragmentCartBinding binding;
-    private List<CartItem> cartItems;
+    private List<CartItem> cartItems = new ArrayList<>();
+    private CartAdapter adapter;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentCartBinding.inflate(inflater, container, false);
-        updateTotal();
         return binding.getRoot();
     }
 
@@ -52,68 +51,35 @@ public class CartFragment extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         if (firebaseAuth.getCurrentUser() != null) {
-
             String uid = firebaseAuth.getCurrentUser().getUid();
 
-            db.collection("users").document(uid).collection("cart").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                @Override
-                public void onSuccess(QuerySnapshot qds) {
-                    if (!qds.isEmpty()) {
+            binding.cartCartItems.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new CartAdapter(cartItems);
+            binding.cartCartItems.setAdapter(adapter);
 
-                        cartItems = new ArrayList<>();
-
-                        for (DocumentSnapshot ds : qds.getDocuments()) {
-                            CartItem cartItem = ds.toObject(CartItem.class);
-                            if (cartItem != null) {
-                                String documentId = ds.getId();
-                                cartItem.setDocumentId(documentId);
-
-                                cartItems.add(cartItem);
-                            }
-                        }
-
-
-                        //   cartItems = qds.toObjects(CartItem.class);
-
-                        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
-                        binding.cartCartItems.setLayoutManager(layoutManager);
-
-                        CartAdapter adapter = new CartAdapter(cartItems);
-
-                        adapter.setOnQuantityChangeListener(cartItem -> {
-                            String documentId = cartItem.getDocumentId();
-                            db.collection("users").document(uid)
-                                    .collection("cart")
-                                    .document(documentId)
-                                    .update("quantity", cartItem.getQuantity())
-                                    .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(getContext(), "Item quantity has been updated!", Toast.LENGTH_SHORT).show();
-                                    });
-
-
+            adapter.setOnQuantityChangeListener(cartItem -> {
+                db.collection("users").document(uid)
+                        .collection("cart")
+                        .document(cartItem.getDocumentId())
+                        .update("quantity", cartItem.getQuantity())
+                        .addOnSuccessListener(aVoid -> {
                             updateTotal();
                         });
-
-                        adapter.setOnRemoveListener(position -> {
-
-                            String documentId = cartItems.get(position).getDocumentId();
-                            db.collection("users").document(uid).collection("cart").document(documentId).delete().addOnSuccessListener(aVoid -> {
-                                cartItems.remove(position);
-                                adapter.notifyItemRemoved(position);
-                                adapter.notifyItemRangeChanged(position, cartItems.size());
-                                updateTotal();
-                                Toast.makeText(getContext(), "Item has been removed!", Toast.LENGTH_SHORT).show();
-                            });
-
-
-                        });
-
-                        binding.cartCartItems.setAdapter(adapter);
-                        updateTotal();
-                    }
-                }
             });
 
+            adapter.setOnRemoveListener(position -> {
+                String documentId = cartItems.get(position).getDocumentId();
+                db.collection("users").document(uid).collection("cart").document(documentId).delete().addOnSuccessListener(aVoid -> {
+                    cartItems.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    adapter.notifyItemRangeChanged(position, cartItems.size());
+                    updateTotal();
+                    checkEmptyCart();
+                    Toast.makeText(getContext(), "Item has been removed!", Toast.LENGTH_SHORT).show();
+                });
+            });
+
+            loadCartItems(uid);
         }
 
         binding.cartBtnProceed.setOnClickListener(v -> {
@@ -126,8 +92,37 @@ public class CartFragment extends Fragment {
 
     }
 
+    private void loadCartItems(String uid) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users").document(uid).collection("cart").get().addOnSuccessListener(qds -> {
+            cartItems.clear();
+            for (DocumentSnapshot ds : qds.getDocuments()) {
+                CartItem cartItem = ds.toObject(CartItem.class);
+                if (cartItem != null) {
+                    cartItem.setDocumentId(ds.getId());
+                    cartItems.add(cartItem);
+                }
+            }
+            adapter.notifyDataSetChanged();
+            updateTotal();
+            checkEmptyCart();
+        });
+    }
+
+    private void checkEmptyCart() {
+        if (cartItems.isEmpty()) {
+            binding.cartEmptyView.setVisibility(View.VISIBLE);
+            binding.cartCartItems.setVisibility(View.GONE);
+            binding.cartCheckoutContainer.setVisibility(View.GONE);
+        } else {
+            binding.cartEmptyView.setVisibility(View.GONE);
+            binding.cartCartItems.setVisibility(View.VISIBLE);
+            binding.cartCheckoutContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void updateTotal() {
-        if (cartItems == null || cartItems.isEmpty()) {
+        if (cartItems.isEmpty()) {
             binding.cartTextTotal.setText(String.format(Locale.US, "LKR %,.2f", 0.00));
             return;
         }
@@ -135,49 +130,34 @@ public class CartFragment extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         List<String> productIds = new ArrayList<>();
-        cartItems.forEach(cartItem -> {
-            productIds.add(cartItem.getProductId());
-        });
-
-
-        db.collection("products").whereIn("productId", productIds).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot qds) {
-
-                Map<String, Product> productMap = new HashMap<>();
-
-                qds.getDocuments().forEach(ds -> {
-                    Product product = ds.toObject(Product.class);
-                    if (product != null) {
-                        productMap.put(product.getProductId(), product);
-                    }
-                });
-
-
-//                        final double[] total = {0};
-//
-//                        cartItems.forEach(cartItem -> {
-//                            Product product = productMap.get(cartItem.getProductId());
-//
-//                            if (product != null){
-//                                total[0] += product.getPrice() * cartItem.getQuantity();
-//                            }
-//                        });
-
-
-                double total = 0;
-                for (CartItem cartItem : cartItems) {
-                    Product product = productMap.get(cartItem.getProductId());
-                    if (product != null) {
-                        total += product.getPrice() * cartItem.getQuantity();
-                    }
-                }
-
-                binding.cartTextTotal.setText(String.format(Locale.US, "LKR %,.2f", total));
-
+        for (CartItem item : cartItems) {
+            if (item.getProductId() != null) {
+                productIds.add(item.getProductId());
             }
+        }
+
+        if (productIds.isEmpty()) {
+            binding.cartTextTotal.setText(String.format(Locale.US, "LKR %,.2f", 0.00));
+            return;
+        }
+
+        db.collection("products").whereIn("productId", productIds).get().addOnSuccessListener(qds -> {
+            Map<String, Product> productMap = new HashMap<>();
+            for (DocumentSnapshot ds : qds.getDocuments()) {
+                Product product = ds.toObject(Product.class);
+                if (product != null) {
+                    productMap.put(product.getProductId(), product);
+                }
+            }
+
+            double total = 0;
+            for (CartItem cartItem : cartItems) {
+                Product product = productMap.get(cartItem.getProductId());
+                if (product != null) {
+                    total += product.getPrice() * cartItem.getQuantity();
+                }
+            }
+            binding.cartTextTotal.setText(String.format(Locale.US, "LKR %,.2f", total));
         });
-
-
     }
 }

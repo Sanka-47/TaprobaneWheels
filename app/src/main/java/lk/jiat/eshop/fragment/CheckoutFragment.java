@@ -140,8 +140,8 @@ public class CheckoutFragment extends Fragment {
                 InitRequest req = new InitRequest();
                 req.setSandBox(true);
 
-                req.setMerchantId("1234216");
-                req.setMerchantSecret("NTAyMTM4MjEyMjU4Njg2MjEyNzkyOTYxOTYyMjI3MjgxMjM1MDM=");
+                req.setMerchantId("1224412");
+                req.setMerchantSecret("NzE1MTAxNzcxMDMyNzI1NTM5MTIxNzcyNzgzNTM2ODk1NjcxODA=");
                 req.setCurrency("LKR");
                 req.setAmount(total);
                 req.setOrderId("ESOI-001");
