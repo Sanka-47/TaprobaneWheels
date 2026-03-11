@@ -91,17 +91,24 @@ public class ProfileFragment extends Fragment {
     private void updateProfile() {
         if (currentUser == null) return;
 
+        String name = binding.profileName.getText().toString().trim();
         String contact = binding.profileContact.getText().toString().trim();
         String address1 = binding.profileAddress1.getText().toString().trim();
         String address2 = binding.profileAddress2.getText().toString().trim();
         String city = binding.profileCity.getText().toString().trim();
         String postalCode = binding.profilePostalCode.getText().toString().trim();
 
+        if (name.isEmpty()) {
+            binding.profileName.setError("Name is required");
+            return;
+        }
+
         if (contact.isEmpty()) {
             binding.profileContact.setError("Required");
             return;
         }
 
+        currentUser.setName(name);
         currentUser.setContact(contact);
         currentUser.setAddress1(address1);
         currentUser.setAddress2(address2);
