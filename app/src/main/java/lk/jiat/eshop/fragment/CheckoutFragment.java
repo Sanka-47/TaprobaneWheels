@@ -38,6 +38,7 @@ import lk.jiat.eshop.listener.FirestoreCallback;
 import lk.jiat.eshop.model.CartItem;
 import lk.jiat.eshop.model.Order;
 import lk.jiat.eshop.model.Product;
+import lk.jiat.eshop.model.User;
 import lk.payhere.androidsdk.PHConstants;
 import lk.payhere.androidsdk.PHMainActivity;
 import lk.payhere.androidsdk.PHResponse;
@@ -96,7 +97,44 @@ public class CheckoutFragment extends Fragment {
         });
 
 
+        binding.checkoutCheckCurrentAddress.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                loadUserCurrentAddress();
+            } else {
+                clearShippingFields();
+            }
+        });
+
+
         return binding.getRoot();
+    }
+
+    private void loadUserCurrentAddress() {
+        String uid = firebaseAuth.getCurrentUser().getUid();
+        db.collection("users").document(uid).get().addOnSuccessListener(ds -> {
+            if (ds.exists()) {
+                User user = ds.toObject(User.class);
+                if (user != null) {
+                    binding.shippingDetailsName.setText(user.getName());
+                    binding.shippingDetailsEmail.setText(user.getEmail());
+                    binding.shippingDetailsContact.setText(user.getContact());
+                    binding.shippingDetailsAddress1.setText(user.getAddress1());
+                    binding.shippingDetailsAddress2.setText(user.getAddress2());
+                    binding.shippingDetailsCity.setText(user.getCity());
+                    binding.shippingDetailsPostcode.setText(user.getPostalCode());
+                }
+            }
+        });
+    }
+
+    private void clearShippingFields() {
+        binding.shippingDetailsName.setText("");
+        binding.shippingDetailsEmail.setText("");
+        binding.shippingDetailsContact.setText("");
+        binding.shippingDetailsAddress1.setText("");
+        binding.shippingDetailsAddress2.setText("");
+        binding.shippingDetailsCity.setText("");
+        binding.shippingDetailsPostcode.setText("");
     }
 
     @Override
@@ -149,11 +187,11 @@ public class CheckoutFragment extends Fragment {
                 req.setItemsDescription("");
 
                 req.getCustomer().setFirstName(binding.shippingDetailsName.getText().toString());
-                req.getCustomer().setLastName("Lakshan");
-                req.getCustomer().setEmail("lakshan@gmail.com");
-                req.getCustomer().setPhone("+94771234567");
-                req.getCustomer().getAddress().setAddress("No.1, Galle Road");
-                req.getCustomer().getAddress().setCity("Colombo");
+                req.getCustomer().setLastName("");
+                req.getCustomer().setEmail(binding.shippingDetailsEmail.getText().toString());
+                req.getCustomer().setPhone(binding.shippingDetailsContact.getText().toString());
+                req.getCustomer().getAddress().setAddress(binding.shippingDetailsAddress1.getText().toString());
+                req.getCustomer().getAddress().setCity(binding.shippingDetailsCity.getText().toString());
                 req.getCustomer().getAddress().setCountry("Sri Lanka");
 
                 //req.setNotifyUrl("https://eshop.requestcatcher.com/");

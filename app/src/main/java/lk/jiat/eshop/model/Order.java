@@ -19,6 +19,8 @@ public class Order {
     private String userId;
     private double totalAmount;
     private String status;
+    @Builder.Default
+    private String shippingStatus = "Processing";
     private Timestamp orderDate;
     private List<OrderItem> orderItems;
     private Address shippingAddress;

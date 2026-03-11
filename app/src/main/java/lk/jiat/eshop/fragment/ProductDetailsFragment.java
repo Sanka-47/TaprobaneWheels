@@ -26,6 +26,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -42,6 +43,7 @@ import lk.jiat.eshop.adapter.SectionAdapter;
 import lk.jiat.eshop.databinding.FragmentProductDetailsBinding;
 import lk.jiat.eshop.model.CartItem;
 import lk.jiat.eshop.model.Product;
+import lk.jiat.eshop.model.Wishlist;
 
 
 public class ProductDetailsFragment extends Fragment {
@@ -50,6 +52,8 @@ public class ProductDetailsFragment extends Fragment {
     private String productId;
     private int quantity = 1;
     private int avbQuantity;
+    private boolean isInWishlist = false;
+    private String wishlistDocId;
 
     private Map<String, ChipGroup> attributeGroups = new HashMap<>();
 
@@ -162,7 +166,69 @@ public class ProductDetailsFragment extends Fragment {
 
         });
 
+        checkWishlistStatus();
 
+        binding.productDetailsWishlist.setOnClickListener(v -> {
+            toggleWishlist();
+        });
+
+
+    }
+
+    private void checkWishlistStatus() {
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        if (firebaseAuth.getCurrentUser() != null) {
+            String uid = firebaseAuth.getCurrentUser().getUid();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+            db.collection("users").document(uid).collection("wishlist")
+                    .whereEqualTo("productId", productId)
+                    .get()
+                    .addOnSuccessListener(qds -> {
+                        if (!qds.isEmpty()) {
+                            isInWishlist = true;
+                            wishlistDocId = qds.getDocuments().get(0).getId();
+                            binding.productDetailsWishlist.setChecked(true);
+                        } else {
+                            isInWishlist = false;
+                            binding.productDetailsWishlist.setChecked(false);
+                        }
+                    });
+        }
+    }
+
+    private void toggleWishlist() {
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        if (firebaseAuth.getCurrentUser() == null) {
+            Intent intent = new Intent(getActivity(), SignInActivity.class);
+            startActivity(intent);
+            return;
+        }
+
+        String uid = firebaseAuth.getCurrentUser().getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        if (isInWishlist) {
+            // Remove from wishlist
+            db.collection("users").document(uid).collection("wishlist").document(wishlistDocId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        isInWishlist = false;
+                        binding.productDetailsWishlist.setChecked(false);
+                        Toast.makeText(getContext(), "Removed from wishlist", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            // Add to wishlist
+            Wishlist wishlistItem = new Wishlist(productId);
+            db.collection("users").document(uid).collection("wishlist")
+                    .add(wishlistItem)
+                    .addOnSuccessListener(dr -> {
+                        isInWishlist = true;
+                        wishlistDocId = dr.getId();
+                        binding.productDetailsWishlist.setChecked(true);
+                        Toast.makeText(getContext(), "Added to wishlist", Toast.LENGTH_SHORT).show();
+                    });
+        }
     }
 
     private void loadTopSellProduct() {
