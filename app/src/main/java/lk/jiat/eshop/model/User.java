@@ -14,4 +14,9 @@ public class User {
     private String name;
     private String email;
     private String profilePicUrl;
+    private String contact;
+    private String address1;
+    private String address2;
+    private String postalCode;
+    private String city;
 }
