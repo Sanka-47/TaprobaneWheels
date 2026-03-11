@@ -53,6 +53,12 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <CheckBox
+                        android:id="@+id/checkout_check_current_address"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Use my current address" />
+
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
