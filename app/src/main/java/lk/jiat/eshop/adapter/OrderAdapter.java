@@ -49,6 +49,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
         holder.orderId.setText("Order #" + order.getOrderId());
         holder.orderStatus.setText(order.getStatus());
         holder.orderTotal.setText(String.format(Locale.US, "LKR %,.2f", order.getTotalAmount()));
+        holder.shippingStatus.setText(order.getShippingStatus());
 
         if (order.getOrderDate() != null) {
             holder.orderDate.setText(dateFormat.format(order.getOrderDate().toDate()));
@@ -111,7 +112,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView orderId, orderStatus, orderDate, orderTotal;
+        TextView orderId, orderStatus, orderDate, orderTotal, shippingStatus;
         LinearLayout itemsContainer;
 
         public ViewHolder(@NonNull View itemView) {
@@ -120,6 +121,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
             orderStatus = itemView.findViewById(R.id.item_order_status);
             orderDate = itemView.findViewById(R.id.item_order_date);
             orderTotal = itemView.findViewById(R.id.item_order_total);
+            shippingStatus = itemView.findViewById(R.id.item_order_shipping_status);
             itemsContainer = itemView.findViewById(R.id.item_order_items_container);
         }
     }
