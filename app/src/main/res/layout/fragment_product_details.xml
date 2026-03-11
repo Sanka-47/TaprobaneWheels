@@ -39,13 +39,30 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/product_details_title"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="LED Night Light USB Charging Intelligent Human Induction For Bedside Cabinet Home Wardrobe Lighting Motion Sensor Light Led Lamp"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/product_details_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toStartOf="@+id/product_details_wishlist"
+                        android:layout_marginEnd="8dp"
+                        android:text="Product Title"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <CheckBox
+                        android:id="@+id/product_details_wishlist"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentEnd="true"
+                        android:button="@null"
+                        android:background="@drawable/wishlist_selector"
+                        android:checked="false" />
+
+                </RelativeLayout>
 
                 <RatingBar
                     android:id="@+id/product_details_rating"
@@ -72,7 +89,6 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Need to complete -->
                 <LinearLayout
                     android:id="@+id/product_details_attribute_container"
                     android:layout_width="match_parent"
