@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 
 import lk.jiat.eshop.R;
 import lk.jiat.eshop.adapter.ProfileAdapter;
@@ -69,8 +70,17 @@ public class ProfileFragment extends Fragment {
                                 binding.profilePostalCode.setText(currentUser.getPostalCode());
 
                                 if (currentUser.getProfilePicUrl() != null && !currentUser.getProfilePicUrl().isEmpty()) {
-                                    // Image loading handled by MainActivity for simplicity, 
-                                    // or add Glide loading here if needed.
+                                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                                    storage.getReference("profile-images/" + currentUser.getProfilePicUrl()).getDownloadUrl()
+                                            .addOnSuccessListener(uri -> {
+                                                if (isAdded()) {
+                                                    Glide.with(ProfileFragment.this)
+                                                            .load(uri)
+                                                            .circleCrop()
+                                                            .placeholder(R.drawable.person_24)
+                                                            .into(binding.profileImage);
+                                                }
+                                            });
                                 }
                             }
                         }
