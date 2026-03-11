@@ -110,42 +110,52 @@ public class MainActivity extends AppCompatActivity
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseFirestore = FirebaseFirestore.getInstance();
 
+        updateSideNavHeader();
+    }
 
-        //check and load user details
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateSideNavHeader();
+    }
+
+    private void updateSideNavHeader() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
+            // Initial UI state while loading Firestore
+            String displayName = currentUser.getDisplayName();
+            sideNavHeaderBinding.headerUserName.setText(displayName != null && !displayName.isEmpty() ? displayName : "User");
+            sideNavHeaderBinding.headerUserEmail.setText(currentUser.getEmail());
+            sideNavHeaderBinding.headerProfilePic.setImageResource(R.drawable.person_24);
+
             firebaseFirestore.collection("users").document(currentUser.getUid()).get()
                     .addOnSuccessListener(ds -> {
-
                         if (ds.exists()) {
                             User user = ds.toObject(User.class);
-                            sideNavHeaderBinding.headerUserName.setText(user.getName());
-                            sideNavHeaderBinding.headerUserEmail.setText(user.getEmail());
+                            if (user != null) {
+                                sideNavHeaderBinding.headerUserName.setText(user.getName());
+                                sideNavHeaderBinding.headerUserEmail.setText(user.getEmail());
 
-
-                            FirebaseStorage storage = FirebaseStorage.getInstance();
-                            storage.getReference("profile-images/" + user.getProfilePicUrl()).getDownloadUrl()
-                                    .addOnSuccessListener(uri -> {
-                                        Glide.with(MainActivity.this)
-                                                .load(uri)
-                                                .circleCrop()
-                                                .into(sideNavHeaderBinding.headerProfilePic);
-                                    });
-
-
+                                if (user.getProfilePicUrl() != null && !user.getProfilePicUrl().isEmpty()) {
+                                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                                    storage.getReference("profile-images/" + user.getProfilePicUrl()).getDownloadUrl()
+                                            .addOnSuccessListener(uri -> {
+                                                Glide.with(MainActivity.this)
+                                                        .load(uri)
+                                                        .circleCrop()
+                                                        .into(sideNavHeaderBinding.headerProfilePic);
+                                            });
+                                }
+                            }
                         } else {
-                            Log.e("Firestore", "Document does not exist");
+                            Log.e("Firestore", "Document does not exist for UID: " + currentUser.getUid());
                         }
-
                     }).addOnFailureListener(e -> {
                         Log.e("Firestore", "Error: " + e.getMessage());
                     });
 
-
-            //Hide side nav login menu item
+            // Update Menu Visibility
             navigationView.getMenu().findItem(R.id.side_nav_login).setVisible(false);
-
-            //Show side nav menu items
             navigationView.getMenu().findItem(R.id.side_nav_profile).setVisible(true);
             navigationView.getMenu().findItem(R.id.side_nav_orders).setVisible(true);
             navigationView.getMenu().findItem(R.id.side_nav_wishlist).setVisible(true);
@@ -153,19 +163,25 @@ public class MainActivity extends AppCompatActivity
             navigationView.getMenu().findItem(R.id.side_nav_message).setVisible(true);
             navigationView.getMenu().findItem(R.id.side_nav_logout).setVisible(true);
 
-
-            /// Change or Set profile image
             sideNavHeaderBinding.headerProfilePic.setOnClickListener(v -> {
-
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
-
                 activityResultLauncher.launch(intent);
             });
-
+        } else {
+            sideNavHeaderBinding.headerUserName.setText("You're not logged in");
+            sideNavHeaderBinding.headerUserEmail.setText("");
+            sideNavHeaderBinding.headerProfilePic.setImageResource(R.drawable.person_24);
+            
+            navigationView.getMenu().findItem(R.id.side_nav_login).setVisible(true);
+            navigationView.getMenu().findItem(R.id.side_nav_profile).setVisible(false);
+            navigationView.getMenu().findItem(R.id.side_nav_orders).setVisible(false);
+            navigationView.getMenu().findItem(R.id.side_nav_wishlist).setVisible(false);
+            navigationView.getMenu().findItem(R.id.side_nav_cart).setVisible(false);
+            navigationView.getMenu().findItem(R.id.side_nav_message).setVisible(false);
+            navigationView.getMenu().findItem(R.id.side_nav_logout).setVisible(false);
         }
-
     }
 
 
@@ -269,14 +285,10 @@ public class MainActivity extends AppCompatActivity
 
         } else if (itemId == R.id.side_nav_logout) {
             firebaseAuth.signOut();
+            updateSideNavHeader();
             loadFragment(new HomeFragment());
-            navigationView.getMenu().clear();
-            navigationView.inflateMenu(R.menu.side_nav_menu);
-
-            //View headerView = navigationView.getHeaderView(0);
-
-            navigationView.removeHeaderView(sideNavHeaderBinding.getRoot());
-            navigationView.inflateHeaderView(R.layout.side_nav_header);
+            navigationView.getMenu().findItem(R.id.side_nav_home).setChecked(true);
+            bottomNavigationView.getMenu().findItem(R.id.bottom_nav_home).setChecked(true);
         }
 
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
