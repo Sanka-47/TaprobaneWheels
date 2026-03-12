@@ -39,7 +39,7 @@
             android:checkable="true"/>
         <item
             android:id="@+id/side_nav_talk_expert"
-            android:icon="@drawable/person_24"
+            android:icon="@drawable/call_24"
             android:title="@string/side_nav_talk_expert_title"
             android:visible="true"
             android:checkable="false"/>
