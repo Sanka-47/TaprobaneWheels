@@ -38,6 +38,12 @@
             android:visible="false"
             android:checkable="true"/>
         <item
+            android:id="@+id/side_nav_talk_expert"
+            android:icon="@drawable/call_24"
+            android:title="@string/side_nav_talk_expert_title"
+            android:visible="true"
+            android:checkable="false"/>
+        <item
             android:id="@+id/side_nav_settings"
             android:icon="@drawable/settings_24"
             android:title="@string/side_nav_settings_title"

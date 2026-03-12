@@ -70,7 +70,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(binding.getRoot());
 
         View headerView = binding.sideNavigationView.getHeaderView(0);
-
         sideNavHeaderBinding = SideNavHeaderBinding.bind(headerView);
 
         drawerLayout = binding.drawerLayout;
@@ -278,6 +277,11 @@ public class MainActivity extends AppCompatActivity
         } else if (itemId == R.id.bottom_nav_category) {
             loadFragment(new CategoryFragment());
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_category).setChecked(true);
+
+        } else if (itemId == R.id.side_nav_talk_expert) {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:0772346088"));
+            startActivity(intent);
 
         } else if (itemId == R.id.side_nav_login) {
             Intent intent = new Intent(MainActivity.this, SignInActivity.class);
