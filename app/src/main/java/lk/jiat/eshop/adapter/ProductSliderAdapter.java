@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.github.chrisbanes.photoview.PhotoView;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -43,7 +44,6 @@ public class ProductSliderAdapter extends RecyclerView.Adapter<ProductSliderAdap
             if (imagePath.startsWith("http")) {
                 Glide.with(holder.itemView.getContext())
                         .load(imagePath)
-                        .centerCrop()
                         .into(holder.imageView);
             } else {
                 StorageReference storageReference;
@@ -57,7 +57,6 @@ public class ProductSliderAdapter extends RecyclerView.Adapter<ProductSliderAdap
                         .addOnSuccessListener(uri -> {
                             Glide.with(holder.itemView.getContext())
                                     .load(uri)
-                                    .centerCrop()
                                     .into(holder.imageView);
                         });
             }
@@ -71,7 +70,7 @@ public class ProductSliderAdapter extends RecyclerView.Adapter<ProductSliderAdap
 
 
     public static class ProductSliderViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageView;
+        PhotoView imageView;
 
         public ProductSliderViewHolder(@NonNull View itemView) {
             super(itemView);
