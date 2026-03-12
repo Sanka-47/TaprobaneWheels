@@ -1,7 +1,6 @@
 package lk.jiat.eshop.adapter;
 
-import android.app.Activity;
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,29 +55,13 @@ public class ProductSliderAdapter extends RecyclerView.Adapter<ProductSliderAdap
 
                 storageReference.getDownloadUrl()
                         .addOnSuccessListener(uri -> {
-                            Context context = holder.itemView.getContext();
-                            if (isValidContextForGlide(context)) {
-                                Glide.with(context)
-                                        .load(uri)
-                                        .centerCrop()
-                                        .into(holder.imageView);
-                            }
+                            Glide.with(holder.itemView.getContext())
+                                    .load(uri)
+                                    .centerCrop()
+                                    .into(holder.imageView);
                         });
             }
         }
-    }
-
-    private boolean isValidContextForGlide(Context context) {
-        if (context == null) {
-            return false;
-        }
-        if (context instanceof Activity) {
-            final Activity activity = (Activity) context;
-            if (activity.isDestroyed() || activity.isFinishing()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override

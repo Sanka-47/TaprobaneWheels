@@ -129,8 +129,6 @@ public class MainActivity extends AppCompatActivity
 
             firebaseFirestore.collection("users").document(currentUser.getUid()).get()
                     .addOnSuccessListener(ds -> {
-                        if (isFinishing() || isDestroyed()) return;
-
                         if (ds.exists()) {
                             User user = ds.toObject(User.class);
                             if (user != null) {
@@ -141,12 +139,10 @@ public class MainActivity extends AppCompatActivity
                                     FirebaseStorage storage = FirebaseStorage.getInstance();
                                     storage.getReference("profile-images/" + user.getProfilePicUrl()).getDownloadUrl()
                                             .addOnSuccessListener(uri -> {
-                                                if (!isFinishing() && !isDestroyed()) {
-                                                    Glide.with(MainActivity.this)
-                                                            .load(uri)
-                                                            .circleCrop()
-                                                            .into(sideNavHeaderBinding.headerProfilePic);
-                                                }
+                                                Glide.with(MainActivity.this)
+                                                        .load(uri)
+                                                        .circleCrop()
+                                                        .into(sideNavHeaderBinding.headerProfilePic);
                                             });
                                 }
                             }
@@ -194,12 +190,10 @@ public class MainActivity extends AppCompatActivity
                     Uri uri = result.getData().getData();
                     Log.i("ImageURI", uri.getPath());
 
-                    if (!isFinishing() && !isDestroyed()) {
-                        Glide.with(MainActivity.this)
-                                .load(uri)
-                                .circleCrop()
-                                .into(sideNavHeaderBinding.headerProfilePic);
-                    }
+                    Glide.with(MainActivity.this)
+                            .load(uri)
+                            .circleCrop()
+                            .into(sideNavHeaderBinding.headerProfilePic);
 
 
                     String imageId = UUID.randomUUID().toString();
@@ -214,9 +208,7 @@ public class MainActivity extends AppCompatActivity
                                         .document(firebaseAuth.getUid())
                                         .update("profilePicUrl", imageId)
                                         .addOnSuccessListener(aVoid -> {
-                                            if (!isFinishing() && !isDestroyed()) {
-                                                Toast.makeText(MainActivity.this, "Profile image changed!", Toast.LENGTH_SHORT).show();
-                                            }
+                                            Toast.makeText(MainActivity.this, "Profile image changed!", Toast.LENGTH_SHORT).show();
                                         });
                             });
 

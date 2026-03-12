@@ -1,7 +1,5 @@
 package lk.jiat.eshop.adapter;
 
-import android.app.Activity;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,24 +65,18 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.ViewHo
                             if (product.getImages() != null && !product.getImages().isEmpty()) {
                                 String imagePath = product.getImages().get(0);
                                 if (imagePath.startsWith("http")) {
-                                    Context context = holder.itemView.getContext();
-                                    if (isValidContextForGlide(context)) {
-                                        Glide.with(context)
-                                                .load(imagePath)
-                                                .placeholder(R.drawable.app_logo)
-                                                .into(holder.image);
-                                    }
+                                    Glide.with(holder.itemView.getContext())
+                                            .load(imagePath)
+                                            .placeholder(R.drawable.app_logo)
+                                            .into(holder.image);
                                 } else {
                                     StorageReference ref = imagePath.startsWith("gs://") ?
                                             storage.getReferenceFromUrl(imagePath) : storage.getReference(imagePath);
                                     ref.getDownloadUrl().addOnSuccessListener(uri -> {
-                                        Context context = holder.itemView.getContext();
-                                        if (isValidContextForGlide(context)) {
-                                            Glide.with(context)
-                                                    .load(uri)
-                                                    .placeholder(R.drawable.app_logo)
-                                                    .into(holder.image);
-                                        }
+                                        Glide.with(holder.itemView.getContext())
+                                                .load(uri)
+                                                .placeholder(R.drawable.app_logo)
+                                                .into(holder.image);
                                     });
                                 }
                             }
@@ -103,19 +95,6 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.ViewHo
                 removeListener.onRemove(position);
             }
         });
-    }
-
-    private boolean isValidContextForGlide(Context context) {
-        if (context == null) {
-            return false;
-        }
-        if (context instanceof Activity) {
-            final Activity activity = (Activity) context;
-            if (activity.isDestroyed() || activity.isFinishing()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override
