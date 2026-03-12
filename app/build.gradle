@@ -58,6 +58,6 @@ dependencies {
     implementation (libs.dotsindicator)
     implementation libs.payhere.android.sdk
     implementation libs.gson
-
+    implementation libs.photoview
 
 }

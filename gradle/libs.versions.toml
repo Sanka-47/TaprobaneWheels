@@ -15,6 +15,7 @@ constraintlayout = "2.2.1"
 payhereAndroidSdk = "v3.0.18"
 picasso = "2.71828"
 preference = "1.2.1"
+photoview = "2.3.0"
 
 [libraries]
 dotsindicator = { module = "com.tbuonomo:dotsindicator", version.ref = "dotsindicator" }
@@ -36,7 +37,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 payhere-android-sdk = { module = "com.github.PayHereDevs:payhere-android-sdk", version.ref = "payhereAndroidSdk" }
 picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
