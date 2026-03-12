@@ -1,5 +1,7 @@
 package lk.jiat.eshop.adapter;
 
+import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +23,6 @@ import java.util.List;
 
 import lk.jiat.eshop.R;
 import lk.jiat.eshop.model.Category;
-import lombok.val;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
 
@@ -66,10 +67,13 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
 
                 storageReference.getDownloadUrl()
                         .addOnSuccessListener(uri -> {
-                            Glide.with(holder.itemView.getContext())
-                                    .load(uri)
-                                    .centerCrop()
-                                    .into(holder.categoryImage);
+                            Context context = holder.itemView.getContext();
+                            if (isValidContextForGlide(context)) {
+                                Glide.with(context)
+                                        .load(uri)
+                                        .centerCrop()
+                                        .into(holder.categoryImage);
+                            }
                         });
             }
         }
@@ -84,6 +88,19 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
                 listener.onCategoryClick(category);
             }
         });
+    }
+
+    private boolean isValidContextForGlide(Context context) {
+        if (context == null) {
+            return false;
+        }
+        if (context instanceof Activity) {
+            final Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

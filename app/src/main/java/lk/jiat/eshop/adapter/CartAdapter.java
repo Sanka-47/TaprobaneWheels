@@ -1,5 +1,7 @@
 package lk.jiat.eshop.adapter;
 
+import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -87,11 +89,14 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                         String imagePath = product.getImages().get(0);
 
                         if (imagePath.startsWith("http")) {
-                            Glide.with(holder.itemView.getContext())
-                                    .load(imagePath)
-                                    .centerCrop()
-                                    .placeholder(R.drawable.app_logo)
-                                    .into(holder.productImage);
+                            Context context = holder.itemView.getContext();
+                            if (isValidContextForGlide(context)) {
+                                Glide.with(context)
+                                        .load(imagePath)
+                                        .centerCrop()
+                                        .placeholder(R.drawable.app_logo)
+                                        .into(holder.productImage);
+                            }
                         } else {
                             StorageReference storageReference;
                             if (imagePath.startsWith("gs://")) {
@@ -102,11 +107,14 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
 
                             storageReference.getDownloadUrl()
                                     .addOnSuccessListener(uri -> {
-                                        Glide.with(holder.itemView.getContext())
-                                                .load(uri)
-                                                .centerCrop()
-                                                .placeholder(R.drawable.app_logo)
-                                                .into(holder.productImage);
+                                        Context context = holder.itemView.getContext();
+                                        if (isValidContextForGlide(context)) {
+                                            Glide.with(context)
+                                                    .load(uri)
+                                                    .centerCrop()
+                                                    .placeholder(R.drawable.app_logo)
+                                                    .into(holder.productImage);
+                                        }
                                     });
                         }
                     }
@@ -149,6 +157,19 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
             }
         });
 
+    }
+
+    private boolean isValidContextForGlide(Context context) {
+        if (context == null) {
+            return false;
+        }
+        if (context instanceof Activity) {
+            final Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
