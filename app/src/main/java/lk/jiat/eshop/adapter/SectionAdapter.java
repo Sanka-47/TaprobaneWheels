@@ -1,5 +1,7 @@
 package lk.jiat.eshop.adapter;
 
+import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,7 +67,13 @@ public class SectionAdapter extends RecyclerView.Adapter<SectionAdapter.ViewHold
 
                 storageReference.getDownloadUrl()
                         .addOnSuccessListener(uri -> {
-                            Glide.with(holder.itemView.getContext())
+                            Context context = holder.itemView.getContext();
+                            if (context instanceof Activity) {
+                                if (((Activity) context).isFinishing() || ((Activity) context).isDestroyed()) {
+                                    return;
+                                }
+                            }
+                            Glide.with(context)
                                     .load(uri)
                                     .centerCrop()
                                     .into(holder.productImage);

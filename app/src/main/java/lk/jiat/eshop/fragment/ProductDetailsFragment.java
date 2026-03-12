@@ -1,8 +1,11 @@
 package lk.jiat.eshop.fragment;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -44,6 +47,7 @@ import lk.jiat.eshop.databinding.FragmentProductDetailsBinding;
 import lk.jiat.eshop.model.CartItem;
 import lk.jiat.eshop.model.Product;
 import lk.jiat.eshop.model.Wishlist;
+import lk.jiat.eshop.util.ShakeDetector;
 
 
 public class ProductDetailsFragment extends Fragment {
@@ -54,8 +58,13 @@ public class ProductDetailsFragment extends Fragment {
     private int avbQuantity;
     private boolean isInWishlist = false;
     private String wishlistDocId;
+    private Product currentProduct;
 
     private Map<String, ChipGroup> attributeGroups = new HashMap<>();
+
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,6 +72,13 @@ public class ProductDetailsFragment extends Fragment {
         if (getArguments() != null) {
             productId = getArguments().getString("productId");
         }
+
+        mSensorManager = (SensorManager) requireActivity().getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector();
+        mShakeDetector.setOnShakeListener(count -> {
+            shareProduct();
+        });
     }
 
     @Override
@@ -91,25 +107,25 @@ public class ProductDetailsFragment extends Fragment {
             @Override
             public void onSuccess(QuerySnapshot qds) {
                 if (!qds.isEmpty()) {
-                    Product product = qds.getDocuments().get(0).toObject(Product.class);
+                    currentProduct = qds.getDocuments().get(0).toObject(Product.class);
 
-                    ProductSliderAdapter adapter = new ProductSliderAdapter(product.getImages());
+                    ProductSliderAdapter adapter = new ProductSliderAdapter(currentProduct.getImages());
                     binding.productImageSlider.setAdapter(adapter);
 
                     binding.dotsIndicator.attachTo(binding.productImageSlider);
 
-                    binding.productDetailsTitle.setText(product.getTitle());
+                    binding.productDetailsTitle.setText(currentProduct.getTitle());
 
-                    binding.productDetailsRating.setRating(product.getRating());
+                    binding.productDetailsRating.setRating(currentProduct.getRating());
 
-                    binding.productDetailsPrice.setText("LKR " + product.getPrice());
+                    binding.productDetailsPrice.setText("LKR " + currentProduct.getPrice());
 
-                    binding.productDetailsAvbQty.setText(String.valueOf(product.getStockCount()));
-                    avbQuantity = product.getStockCount();
+                    binding.productDetailsAvbQty.setText(String.valueOf(currentProduct.getStockCount()));
+                    avbQuantity = currentProduct.getStockCount();
 
-                    if (product.getAttributes() != null) {
+                    if (currentProduct.getAttributes() != null) {
 
-                        product.getAttributes().forEach(attribute -> {
+                        currentProduct.getAttributes().forEach(attribute -> {
                             renderAttribute(attribute, binding.productDetailsAttributeContainer);
 
                         });
@@ -173,6 +189,32 @@ public class ProductDetailsFragment extends Fragment {
         });
 
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+    }
+
+    @Override
+    public void onPause() {
+        mSensorManager.unregisterListener(mShakeDetector);
+        super.onPause();
+    }
+
+    private void shareProduct() {
+        if (currentProduct != null) {
+            String shareMessage = "Check out this product on EShop: " + currentProduct.getTitle() + "\n" +
+                    "Price: LKR " + currentProduct.getPrice() + "\n" +
+                    "Link: https://eshop.lk/product/" + currentProduct.getProductId();
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "EShop Product");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage);
+            startActivity(Intent.createChooser(shareIntent, "Share via"));
+        }
     }
 
     private void checkWishlistStatus() {
@@ -329,21 +371,8 @@ public class ProductDetailsFragment extends Fragment {
                 attributes.add(new CartItem.Attribute(attributeName, value));
             }
         }
-
-
         return attributes;
     }
 
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        getActivity().findViewById(R.id.bottom_navigation_view).setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        getActivity().findViewById(R.id.bottom_navigation_view).setVisibility(View.GONE);
-    }
 }
