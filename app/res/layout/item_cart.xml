@@ -45,7 +45,7 @@
                     android:layout_height="wrap_content"
                     android:text="Color: "
                     android:textSize="12sp"
-                    android:textColor="#808080"/>
+                    android:textColor="@color/md_theme_outline"/>
 
                 <View
                     android:id="@+id/item_cart_color_indicator"
@@ -61,7 +61,7 @@
                     android:layout_height="wrap_content"
                     android:text="N/A"
                     android:textSize="12sp"
-                    android:layout_marginStart="4dp"/>
+                    android:textColor="@color/md_theme_onSurfaceVariant"/>
             </LinearLayout>
 
             <LinearLayout
@@ -75,7 +75,7 @@
                     android:layout_height="wrap_content"
                     android:text="Rim Size: "
                     android:textSize="12sp"
-                    android:textColor="#808080"/>
+                    android:textColor="@color/md_theme_outline"/>
 
                 <TextView
                     android:id="@+id/item_cart_rim_size"
@@ -83,7 +83,7 @@
                     android:layout_height="wrap_content"
                     android:text="N/A"
                     android:textSize="12sp"
-                    android:layout_marginStart="4dp"/>
+                    android:textColor="@color/md_theme_onSurfaceVariant"/>
             </LinearLayout>
 
             <TextView
@@ -93,6 +93,7 @@
                 android:layout_marginTop="8dp"
                 android:text="LKR 0.00"
                 android:textSize="16sp"
+                android:textColor="@color/md_theme_primary"
                 android:textStyle="bold"/>
 
             <ImageView
@@ -121,6 +122,8 @@
                 android:padding="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
+                android:background="@drawable/circle_shape"
+                android:backgroundTint="@color/md_theme_primaryContainer"
                 android:textSize="16sp" />
 
             <TextView
@@ -142,6 +145,8 @@
                 android:padding="0dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
+                android:background="@drawable/circle_shape"
+                android:backgroundTint="@color/md_theme_primaryContainer"
                 android:textSize="16sp" />
 
         </LinearLayout>

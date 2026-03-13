@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Product {
     private String productId;
+    private String brand;
+    private String model;
     private String title;
     private String description;
     private double price;
@@ -23,15 +25,21 @@ public class Product {
     private float rating;
     private List<Attribute> attributes;
 
-    public Product(String productId, String title, String description, double price, String categoryId, List<String> images, int stockCount, boolean status) {
+    public Product(String productId, String brand, String model, String description, double price, String categoryId, List<String> images, int stockCount, boolean status) {
         this.productId = productId;
-        this.title = title;
+        this.brand = brand;
+        this.model = model;
+        this.title = brand + " " + model;
         this.description = description;
         this.price = price;
         this.categoryId = categoryId;
         this.images = images;
         this.stockCount = stockCount;
         this.status = status;
+    }
+
+    public void setTitleFromBrandModel() {
+        this.title = this.brand + " " + this.model;
     }
 
     @Data
