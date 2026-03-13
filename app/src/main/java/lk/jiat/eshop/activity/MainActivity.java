@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -47,6 +50,7 @@ import lk.jiat.eshop.fragment.MessageFragment;
 import lk.jiat.eshop.fragment.OrdersFragment;
 import lk.jiat.eshop.fragment.ProductDetailsFragment;
 import lk.jiat.eshop.fragment.ProfileFragment;
+import lk.jiat.eshop.fragment.SearchFragment;
 import lk.jiat.eshop.fragment.SettingsFragment;
 import lk.jiat.eshop.fragment.WishlistFragment;
 import lk.jiat.eshop.model.User;
@@ -119,6 +123,26 @@ public class MainActivity extends AppCompatActivity
         firebaseFirestore = FirebaseFirestore.getInstance();
 
         updateSideNavHeader();
+
+        // Search Functionality
+        binding.textInputSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                String query = binding.textInputSearch.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    performSearch(query);
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void performSearch(String query) {
+        Bundle bundle = new Bundle();
+        bundle.putString("query", query);
+        SearchFragment searchFragment = new SearchFragment();
+        searchFragment.setArguments(bundle);
+        loadFragment(searchFragment, true);
     }
 
     @Override
