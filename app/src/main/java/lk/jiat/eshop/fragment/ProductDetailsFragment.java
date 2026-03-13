@@ -163,6 +163,33 @@ public class ProductDetailsFragment extends Fragment {
 
                 List<CartItem.Attribute> attributes = getFinalSelections();
 
+                // Validation check for Color and Rim Size
+                boolean hasColorAttribute = false;
+                boolean hasRimSizeAttribute = false;
+                boolean colorSelected = false;
+                boolean rimSizeSelected = false;
+
+                if (currentProduct != null && currentProduct.getAttributes() != null) {
+                    for (Product.Attribute attr : currentProduct.getAttributes()) {
+                        if ("Color".equalsIgnoreCase(attr.getName())) hasColorAttribute = true;
+                        if ("Rim Size".equalsIgnoreCase(attr.getName())) hasRimSizeAttribute = true;
+                    }
+                }
+
+                for (CartItem.Attribute attr : attributes) {
+                    if ("Color".equalsIgnoreCase(attr.getName())) colorSelected = true;
+                    if ("Rim Size".equalsIgnoreCase(attr.getName())) rimSizeSelected = true;
+                }
+
+                if (hasColorAttribute && !colorSelected) {
+                    Toast.makeText(getContext(), "Please select a color", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (hasRimSizeAttribute && !rimSizeSelected) {
+                    Toast.makeText(getContext(), "Please select a rim size", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 CartItem cartItem = new CartItem(productId, quantity, attributes);
 
                 String uid = firebaseAuth.getCurrentUser().getUid();
@@ -364,9 +391,10 @@ public class ProductDetailsFragment extends Fragment {
             int checkedChipId = chipGroup.getCheckedChipId();
             if (checkedChipId != -1) {
                 Chip chip = getView().findViewById(checkedChipId);
-                String value = chip.getTag().toString();
-
-                attributes.add(new CartItem.Attribute(attributeName, value));
+                if (chip != null) {
+                    String value = chip.getTag().toString();
+                    attributes.add(new CartItem.Attribute(attributeName, value));
+                }
             }
         }
         return attributes;
