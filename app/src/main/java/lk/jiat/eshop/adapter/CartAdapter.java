@@ -1,5 +1,8 @@
 package lk.jiat.eshop.adapter;
 
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,10 +65,30 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
         holder.productTitle.setText("Loading...");
         holder.productPrice.setText("");
         holder.productQuantity.setText(String.valueOf(cartItem.getQuantity()));
-        holder.productImage.setImageResource(R.drawable.app_logo); // Using app_logo as placeholder
+        holder.productImage.setImageResource(R.drawable.app_logo);
+        holder.colorText.setText("N/A");
+        holder.rimSizeText.setText("N/A");
+        holder.colorIndicator.setVisibility(View.GONE);
         holder.itemView.setVisibility(View.VISIBLE);
         holder.itemView.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
         holder.itemView.getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
+
+        // Display attributes from CartItem
+        if (cartItem.getAttributes() != null) {
+            for (CartItem.Attribute attribute : cartItem.getAttributes()) {
+                if ("Color".equalsIgnoreCase(attribute.getName())) {
+                    holder.colorText.setText(attribute.getValue());
+                    try {
+                        holder.colorIndicator.setBackgroundColor(Color.parseColor(attribute.getValue()));
+                        holder.colorIndicator.setVisibility(View.VISIBLE);
+                    } catch (Exception e) {
+                        holder.colorIndicator.setVisibility(View.GONE);
+                    }
+                } else if ("Rim Size".equalsIgnoreCase(attribute.getName())) {
+                    holder.rimSizeText.setText(attribute.getValue());
+                }
+            }
+        }
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("products").whereEqualTo("productId", cartItem.getProductId()).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
@@ -86,8 +109,13 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                     if (product.getImages() != null && !product.getImages().isEmpty()) {
                         String imagePath = product.getImages().get(0);
 
+                        Context context = holder.itemView.getContext();
+                        if (context instanceof Activity && (((Activity) context).isFinishing() || ((Activity) context).isDestroyed())) {
+                            return;
+                        }
+
                         if (imagePath.startsWith("http")) {
-                            Glide.with(holder.itemView.getContext())
+                            Glide.with(context)
                                     .load(imagePath)
                                     .centerCrop()
                                     .placeholder(R.drawable.app_logo)
@@ -102,7 +130,10 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
 
                             storageReference.getDownloadUrl()
                                     .addOnSuccessListener(uri -> {
-                                        Glide.with(holder.itemView.getContext())
+                                        if (context instanceof Activity && (((Activity) context).isFinishing() || ((Activity) context).isDestroyed())) {
+                                            return;
+                                        }
+                                        Glide.with(context)
                                                 .load(uri)
                                                 .centerCrop()
                                                 .placeholder(R.drawable.app_logo)
@@ -140,7 +171,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                     });
 
                 } else {
-                    // Product not found in database, hide this item
                     holder.itemView.setVisibility(View.GONE);
                     holder.itemView.getLayoutParams().height = 0;
                     holder.itemView.getLayoutParams().width = 0;
@@ -161,6 +191,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
         TextView productTitle;
         TextView productPrice;
         TextView productQuantity;
+        TextView colorText;
+        TextView rimSizeText;
+        View colorIndicator;
         AppCompatButton btnPlus;
         AppCompatButton btnMinus;
         ImageView btnRemove;
@@ -171,6 +204,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
             productTitle = itemView.findViewById(R.id.item_cart_title);
             productPrice = itemView.findViewById(R.id.item_cart_price);
             productQuantity = itemView.findViewById(R.id.item_cart_quantity);
+            colorText = itemView.findViewById(R.id.item_cart_color);
+            rimSizeText = itemView.findViewById(R.id.item_cart_rim_size);
+            colorIndicator = itemView.findViewById(R.id.item_cart_color_indicator);
             btnPlus = itemView.findViewById(R.id.item_cart_btn_plus);
             btnMinus = itemView.findViewById(R.id.item_cart_btn_minus);
             btnRemove = itemView.findViewById(R.id.item_cart_remove);
