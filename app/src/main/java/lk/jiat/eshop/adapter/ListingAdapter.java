@@ -1,5 +1,8 @@
 package lk.jiat.eshop.adapter;
 
+import android.app.Activity;
+import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,19 +60,34 @@ public class ListingAdapter extends RecyclerView.Adapter<ListingAdapter.ViewHold
                         .into(holder.productImage);
             } else {
                 StorageReference storageReference;
-                if (imagePath.startsWith("gs://")) {
-                    storageReference = storage.getReferenceFromUrl(imagePath);
-                } else {
-                    storageReference = storage.getReference(imagePath);
-                }
+                try {
+                    if (imagePath.startsWith("gs://")) {
+                        storageReference = storage.getReferenceFromUrl(imagePath);
+                    } else {
+                        storageReference = storage.getReference(imagePath);
+                    }
 
-                storageReference.getDownloadUrl()
-                        .addOnSuccessListener(uri -> {
-                            Glide.with(holder.itemView.getContext())
-                                    .load(uri)
-                                    .centerCrop()
-                                    .into(holder.productImage);
-                        });
+                    storageReference.getDownloadUrl()
+                            .addOnSuccessListener(uri -> {
+                                Context context = holder.itemView.getContext();
+                                if (context instanceof Activity) {
+                                    if (((Activity) context).isFinishing() || ((Activity) context).isDestroyed()) {
+                                        return;
+                                    }
+                                }
+                                Glide.with(context)
+                                        .load(uri)
+                                        .centerCrop()
+                                        .into(holder.productImage);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("Storage", "Error loading image: " + imagePath + " - " + e.getMessage());
+                                holder.productImage.setImageResource(android.R.drawable.ic_menu_report_image);
+                            });
+                } catch (IllegalArgumentException e) {
+                    Log.e("Storage", "Invalid storage path: " + imagePath);
+                    holder.productImage.setImageResource(android.R.drawable.ic_menu_report_image);
+                }
             }
         }
 
