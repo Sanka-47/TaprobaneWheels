@@ -1,7 +1,10 @@
 package lk.jiat.eshop.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -11,15 +14,18 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -177,7 +183,7 @@ public class MainActivity extends AppCompatActivity
             }
 
             setupSpinner(spinnerBrand, new ArrayList<>(brands));
-            setupSpinner(spinnerColor, new ArrayList<>(colors));
+            setupColorSpinner(spinnerColor, new ArrayList<>(colors));
             setupSpinner(spinnerSize, new ArrayList<>(sizes));
         });
 
@@ -205,6 +211,11 @@ public class MainActivity extends AppCompatActivity
     private void setupSpinner(Spinner spinner, List<String> items) {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupColorSpinner(Spinner spinner, List<String> items) {
+        ColorSpinnerAdapter adapter = new ColorSpinnerAdapter(this, items);
         spinner.setAdapter(adapter);
     }
 
@@ -402,6 +413,47 @@ public class MainActivity extends AppCompatActivity
         } else if (currentFragment instanceof ProfileFragment) {
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_profile).setChecked(true);
             navigationView.getMenu().findItem(R.id.side_nav_profile).setChecked(true);
+        }
+    }
+
+    // Custom Color Spinner Adapter
+    private class ColorSpinnerAdapter extends ArrayAdapter<String> {
+        public ColorSpinnerAdapter(Context context, List<String> colors) {
+            super(context, R.layout.item_spinner_color, R.id.text_color_name, colors);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return createViewFromResource(position, convertView, parent);
+        }
+
+        @Override
+        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return createViewFromResource(position, convertView, parent);
+        }
+
+        private View createViewFromResource(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_spinner_color, parent, false);
+            }
+            View colorView = convertView.findViewById(R.id.view_color_preview);
+            TextView textView = convertView.findViewById(R.id.text_color_name);
+
+            String colorCode = getItem(position);
+            textView.setText(colorCode);
+
+            if ("All Colors".equals(colorCode)) {
+                colorView.setVisibility(View.GONE);
+            } else {
+                colorView.setVisibility(View.VISIBLE);
+                try {
+                    colorView.setBackgroundColor(Color.parseColor(colorCode));
+                } catch (Exception e) {
+                    colorView.setBackgroundColor(Color.TRANSPARENT);
+                }
+            }
+            return convertView;
         }
     }
 }
