@@ -14,6 +14,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import lk.jiat.eshop.R;
@@ -25,6 +28,10 @@ public class SearchFragment extends Fragment {
 
     private FragmentSearchBinding binding;
     private String query;
+    private String brand;
+    private String color;
+    private String size;
+    private String sort;
     private ListingAdapter adapter;
 
     public SearchFragment() {
@@ -36,6 +43,10 @@ public class SearchFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             query = getArguments().getString("query");
+            brand = getArguments().getString("brand");
+            color = getArguments().getString("color");
+            size = getArguments().getString("size");
+            sort = getArguments().getString("sort");
         }
     }
 
@@ -51,7 +62,7 @@ public class SearchFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         binding.recyclerViewSearch.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        binding.searchResultsTitle.setText("Search Results for \"" + query + "\"");
+        binding.searchResultsTitle.setText("Search Results for \"" + (query != null ? query : "") + "\"");
 
         performSearch();
     }
@@ -59,29 +70,58 @@ public class SearchFragment extends Fragment {
     private void performSearch() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         
-        // Simple search logic: match brand or model (Firestore doesn't support full-text search easily)
-        // Here we'll search by brand first as an example. 
-        // For better search, you'd usually use Algolia or similar, or fetch all and filter locally.
-        
         db.collection("products")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Product> products = queryDocumentSnapshots.toObjects(Product.class);
+                    List<Product> filteredProducts = new ArrayList<>();
                     
-                    // Filter locally for better matching (case insensitive)
-                    List<Product> filteredProducts = new java.util.ArrayList<>();
-                    String lowerQuery = query.toLowerCase();
+                    String lowerQuery = query != null ? query.toLowerCase() : "";
                     
                     for (Product p : products) {
-                        if ((p.getBrand() != null && p.getBrand().toLowerCase().contains(lowerQuery)) ||
+                        boolean matchesQuery = query == null || query.isEmpty() ||
+                            (p.getBrand() != null && p.getBrand().toLowerCase().contains(lowerQuery)) ||
                             (p.getModel() != null && p.getModel().toLowerCase().contains(lowerQuery)) ||
-                            (p.getTitle() != null && p.getTitle().toLowerCase().contains(lowerQuery))) {
+                            (p.getTitle() != null && p.getTitle().toLowerCase().contains(lowerQuery));
+                        
+                        boolean matchesBrand = brand == null || (p.getBrand() != null && p.getBrand().equalsIgnoreCase(brand));
+                        
+                        boolean matchesColor = color == null;
+                        if (color != null && p.getAttributes() != null) {
+                            for (Product.Attribute attr : p.getAttributes()) {
+                                if ("Color".equalsIgnoreCase(attr.getName()) && attr.getValues().contains(color)) {
+                                    matchesColor = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        boolean matchesSize = size == null;
+                        if (size != null && p.getAttributes() != null) {
+                            for (Product.Attribute attr : p.getAttributes()) {
+                                if ("Rim Size".equalsIgnoreCase(attr.getName()) && attr.getValues().contains(size)) {
+                                    matchesSize = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (matchesQuery && matchesBrand && matchesColor && matchesSize) {
                             filteredProducts.add(p);
                         }
                     }
 
+                    // Apply Sorting
+                    if ("desc".equalsIgnoreCase(sort)) {
+                        filteredProducts.sort((p1, p2) -> Double.compare(p2.getPrice(), p1.getPrice()));
+                    } else {
+                        filteredProducts.sort((p1, p2) -> Double.compare(p1.getPrice(), p2.getPrice()));
+                    }
+
                     if (filteredProducts.isEmpty()) {
-                        binding.searchResultsTitle.setText("No results found for \"" + query + "\"");
+                        binding.searchResultsTitle.setText("No results found");
+                    } else {
+                        binding.searchResultsTitle.setText(filteredProducts.size() + " Results Found");
                     }
 
                     adapter = new ListingAdapter(filteredProducts, product -> {

@@ -1,23 +1,33 @@
 package lk.jiat.eshop.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -37,6 +47,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import lk.jiat.eshop.R;
@@ -53,6 +68,7 @@ import lk.jiat.eshop.fragment.ProfileFragment;
 import lk.jiat.eshop.fragment.SearchFragment;
 import lk.jiat.eshop.fragment.SettingsFragment;
 import lk.jiat.eshop.fragment.WishlistFragment;
+import lk.jiat.eshop.model.Product;
 import lk.jiat.eshop.model.User;
 
 public class MainActivity extends AppCompatActivity
@@ -129,17 +145,88 @@ public class MainActivity extends AppCompatActivity
             if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 String query = binding.textInputSearch.getText().toString().trim();
                 if (!query.isEmpty()) {
-                    performSearch(query);
+                    performSearch(query, null, null, null, "asc");
                 }
                 return true;
             }
             return false;
         });
+
+        binding.btnFilter.setOnClickListener(v -> {
+            showAdvancedSearchDialog();
+        });
     }
 
-    private void performSearch(String query) {
+    private void showAdvancedSearchDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_advanced_search, null);
+        Spinner spinnerBrand = dialogView.findViewById(R.id.spinner_brand);
+        Spinner spinnerColor = dialogView.findViewById(R.id.spinner_color);
+        Spinner spinnerSize = dialogView.findViewById(R.id.spinner_size);
+        View btnApply = dialogView.findViewById(R.id.btn_apply_search);
+        android.widget.RadioGroup radioGroup = dialogView.findViewById(R.id.radio_group_price);
+
+        // Fetch dynamic filter options from Firestore
+        firebaseFirestore.collection("products").get().addOnSuccessListener(queryDocumentSnapshots -> {
+            List<Product> products = queryDocumentSnapshots.toObjects(Product.class);
+            Set<String> brands = new HashSet<>(Collections.singletonList("All Brands"));
+            Set<String> colors = new HashSet<>(Collections.singletonList("All Colors"));
+            Set<String> sizes = new HashSet<>(Collections.singletonList("All Sizes"));
+
+            for (Product p : products) {
+                if (p.getBrand() != null) brands.add(p.getBrand());
+                if (p.getAttributes() != null) {
+                    for (Product.Attribute attr : p.getAttributes()) {
+                        if ("Color".equalsIgnoreCase(attr.getName())) colors.addAll(attr.getValues());
+                        if ("Rim Size".equalsIgnoreCase(attr.getName())) sizes.addAll(attr.getValues());
+                    }
+                }
+            }
+
+            setupSpinner(spinnerBrand, new ArrayList<>(brands));
+            setupColorSpinner(spinnerColor, new ArrayList<>(colors));
+            setupSpinner(spinnerSize, new ArrayList<>(sizes));
+        });
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        btnApply.setOnClickListener(v -> {
+            String brand = spinnerBrand.getSelectedItem().toString();
+            String color = spinnerColor.getSelectedItem().toString();
+            String size = spinnerSize.getSelectedItem().toString();
+            String sort = radioGroup.getCheckedRadioButtonId() == R.id.radio_high_low ? "desc" : "asc";
+
+            performSearch(binding.textInputSearch.getText().toString().trim(), 
+                    brand.equals("All Brands") ? null : brand,
+                    color.equals("All Colors") ? null : color,
+                    size.equals("All Sizes") ? null : size,
+                    sort);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void setupSpinner(Spinner spinner, List<String> items) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupColorSpinner(Spinner spinner, List<String> items) {
+        ColorSpinnerAdapter adapter = new ColorSpinnerAdapter(this, items);
+        spinner.setAdapter(adapter);
+    }
+
+    private void performSearch(String query, String brand, String color, String size, String sort) {
         Bundle bundle = new Bundle();
         bundle.putString("query", query);
+        bundle.putString("brand", brand);
+        bundle.putString("color", color);
+        bundle.putString("size", size);
+        bundle.putString("sort", sort);
+
         SearchFragment searchFragment = new SearchFragment();
         searchFragment.setArguments(bundle);
         loadFragment(searchFragment, true);
@@ -326,6 +413,47 @@ public class MainActivity extends AppCompatActivity
         } else if (currentFragment instanceof ProfileFragment) {
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_profile).setChecked(true);
             navigationView.getMenu().findItem(R.id.side_nav_profile).setChecked(true);
+        }
+    }
+
+    // Custom Color Spinner Adapter
+    private class ColorSpinnerAdapter extends ArrayAdapter<String> {
+        public ColorSpinnerAdapter(Context context, List<String> colors) {
+            super(context, R.layout.item_spinner_color, R.id.text_color_name, colors);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return createViewFromResource(position, convertView, parent);
+        }
+
+        @Override
+        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return createViewFromResource(position, convertView, parent);
+        }
+
+        private View createViewFromResource(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_spinner_color, parent, false);
+            }
+            View colorView = convertView.findViewById(R.id.view_color_preview);
+            TextView textView = convertView.findViewById(R.id.text_color_name);
+
+            String colorCode = getItem(position);
+            textView.setText(colorCode);
+
+            if ("All Colors".equals(colorCode)) {
+                colorView.setVisibility(View.GONE);
+            } else {
+                colorView.setVisibility(View.VISIBLE);
+                try {
+                    colorView.setBackgroundColor(Color.parseColor(colorCode));
+                } catch (Exception e) {
+                    colorView.setBackgroundColor(Color.TRANSPARENT);
+                }
+            }
+            return convertView;
         }
     }
 }
