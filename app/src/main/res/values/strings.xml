@@ -12,6 +12,8 @@
     <string name="side_nav_login_title">Login</string>
     <string name="side_nav_logout_title">Logout</string>
     <string name="side_nav_talk_expert_title">Talk to a Fitment Expert</string>
+    <string name="side_nav_category_support">Support &amp; Communication</string>
+    <string name="side_nav_category_preferences">Preferences</string>
     <string name="bottom_nav_home_title">Home</string>
     <string name="bottom_nav_category_title">Brands</string>
     <string name="bottom_nav_cart_title">Cart</string>

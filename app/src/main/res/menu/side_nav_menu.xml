@@ -33,7 +33,7 @@
             android:checkable="true"/>
     </group>
 
-    <item android:title="Support &amp; Communication">
+    <item android:title="@string/side_nav_category_support">
         <menu>
             <item
                 android:id="@+id/side_nav_message"
@@ -50,7 +50,7 @@
         </menu>
     </item>
 
-    <item android:title="Preferences">
+    <item android:title="@string/side_nav_category_preferences">
         <menu>
             <item
                 android:id="@+id/side_nav_settings"
