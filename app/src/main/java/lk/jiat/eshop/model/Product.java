@@ -1,5 +1,7 @@
 package lk.jiat.eshop.model;
 
+import com.google.firebase.firestore.Exclude;
+
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -12,6 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Product {
+    @Exclude
+    private String id;
     private String productId;
     private String brand;
     private String model;

@@ -20,10 +20,13 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -237,6 +240,7 @@ public class CheckoutFragment extends Fragment {
                 qds.getDocuments().forEach(ds -> {
                     Product product = ds.toObject(Product.class);
                     if (product != null) {
+                        product.setId(ds.getId());
                         products.put(product.getProductId(), product);
                     }
                 });
@@ -325,6 +329,8 @@ public class CheckoutFragment extends Fragment {
 
             getProductsByIds(productIds, data -> {
 
+                WriteBatch batch = db.batch();
+
                 for (CartItem cartItem : cartItems) {
                     Product product = data.get(cartItem.getProductId());
 
@@ -341,13 +347,18 @@ public class CheckoutFragment extends Fragment {
                         Order.OrderItem orderItem = Order.OrderItem.builder().productId(cartItem.getProductId()).unitPrice(product.getPrice()).quantity(cartItem.getQuantity()).attributes(attributes).build();
                         orderItems.add(orderItem);
 
-
-                        ///  Add order items to Oder object
-                        order.setOrderItems(orderItems);
+                        // Deduct stock quantity using actual Document ID
+                        DocumentReference productRef = db.collection("products").document(product.getId());
+                        batch.update(productRef, "stockCount", FieldValue.increment(-cartItem.getQuantity()));
 
                     }
                 }
-                db.collection("orders").document().set(order).addOnSuccessListener(aVoid -> {
+                order.setOrderItems(orderItems);
+
+                DocumentReference orderRef = db.collection("orders").document();
+                batch.set(orderRef, order);
+
+                batch.commit().addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Order Saved!", Toast.LENGTH_SHORT).show();
 
                     // Clear cart

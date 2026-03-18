@@ -31,25 +31,35 @@
             android:title="@string/side_nav_cart_title"
             android:visible="false"
             android:checkable="true"/>
-        <item
-            android:id="@+id/side_nav_message"
-            android:icon="@drawable/message_24"
-            android:title="@string/side_nav_message_title"
-            android:visible="false"
-            android:checkable="true"/>
-        <item
-            android:id="@+id/side_nav_talk_expert"
-            android:icon="@drawable/call_24"
-            android:title="@string/side_nav_talk_expert_title"
-            android:visible="true"
-            android:checkable="false"/>
-        <item
-            android:id="@+id/side_nav_settings"
-            android:icon="@drawable/settings_24"
-            android:title="@string/side_nav_settings_title"
-            android:visible="true"
-            android:checkable="true"/>
     </group>
+
+    <item android:title="@string/side_nav_category_support">
+        <menu>
+            <item
+                android:id="@+id/side_nav_message"
+                android:icon="@drawable/message_24"
+                android:title="@string/side_nav_message_title"
+                android:visible="false"
+                android:checkable="true"/>
+            <item
+                android:id="@+id/side_nav_talk_expert"
+                android:icon="@drawable/call_24"
+                android:title="@string/side_nav_talk_expert_title"
+                android:visible="true"
+                android:checkable="false"/>
+        </menu>
+    </item>
+
+    <item android:title="@string/side_nav_category_preferences">
+        <menu>
+            <item
+                android:id="@+id/side_nav_settings"
+                android:icon="@drawable/settings_24"
+                android:title="@string/side_nav_settings_title"
+                android:visible="true"
+                android:checkable="true"/>
+        </menu>
+    </item>
 
     <group android:id="@+id/side_nav_group_auth">
         <item

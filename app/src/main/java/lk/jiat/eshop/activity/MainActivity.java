@@ -259,10 +259,12 @@ public class MainActivity extends AppCompatActivity
                                     FirebaseStorage storage = FirebaseStorage.getInstance();
                                     storage.getReference("profile-images/" + user.getProfilePicUrl()).getDownloadUrl()
                                             .addOnSuccessListener(uri -> {
-                                                Glide.with(MainActivity.this)
-                                                        .load(uri)
-                                                        .circleCrop()
-                                                        .into(sideNavHeaderBinding.headerProfilePic);
+                                                if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
+                                                    Glide.with(MainActivity.this)
+                                                            .load(uri)
+                                                            .circleCrop()
+                                                            .into(sideNavHeaderBinding.headerProfilePic);
+                                                }
                                             });
                                 }
                             }
@@ -310,10 +312,12 @@ public class MainActivity extends AppCompatActivity
                     Uri uri = result.getData().getData();
                     Log.i("ImageURI", uri.getPath());
 
-                    Glide.with(MainActivity.this)
-                            .load(uri)
-                            .circleCrop()
-                            .into(sideNavHeaderBinding.headerProfilePic);
+                    if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
+                        Glide.with(MainActivity.this)
+                                .load(uri)
+                                .circleCrop()
+                                .into(sideNavHeaderBinding.headerProfilePic);
+                    }
 
 
                     String imageId = UUID.randomUUID().toString();
