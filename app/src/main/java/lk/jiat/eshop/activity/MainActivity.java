@@ -36,6 +36,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -245,14 +246,14 @@ public class MainActivity extends AppCompatActivity
             String displayName = currentUser.getDisplayName();
             sideNavHeaderBinding.headerUserName.setText(displayName != null && !displayName.isEmpty() ? displayName : "User");
             sideNavHeaderBinding.headerUserEmail.setText(currentUser.getEmail());
-            sideNavHeaderBinding.headerProfilePic.setImageResource(R.drawable.person_24);
 
             firebaseFirestore.collection("users").document(currentUser.getUid()).get()
                     .addOnSuccessListener(ds -> {
                         if (ds.exists()) {
                             User user = ds.toObject(User.class);
                             if (user != null) {
-                                sideNavHeaderBinding.headerUserName.setText(user.getName());
+                                String nameForAvatar = user.getName() != null ? user.getName() : "User";
+                                sideNavHeaderBinding.headerUserName.setText(nameForAvatar);
                                 sideNavHeaderBinding.headerUserEmail.setText(user.getEmail());
 
                                 if (user.getProfilePicUrl() != null && !user.getProfilePicUrl().isEmpty()) {
@@ -263,9 +264,16 @@ public class MainActivity extends AppCompatActivity
                                                     Glide.with(MainActivity.this)
                                                             .load(uri)
                                                             .circleCrop()
+                                                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                                            .placeholder(R.drawable.person_24)
                                                             .into(sideNavHeaderBinding.headerProfilePic);
                                                 }
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                loadDynamicAvatar(nameForAvatar);
                                             });
+                                } else {
+                                    loadDynamicAvatar(nameForAvatar);
                                 }
                             }
                         } else {
@@ -302,6 +310,18 @@ public class MainActivity extends AppCompatActivity
             navigationView.getMenu().findItem(R.id.side_nav_cart).setVisible(false);
             navigationView.getMenu().findItem(R.id.side_nav_message).setVisible(false);
             navigationView.getMenu().findItem(R.id.side_nav_logout).setVisible(false);
+        }
+    }
+
+    private void loadDynamicAvatar(String name) {
+        String initialsUrl = "https://ui-avatars.com/api/?name=" + Uri.encode(name) + "&background=random&color=fff&size=256";
+        if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
+            Glide.with(MainActivity.this)
+                    .load(initialsUrl)
+                    .circleCrop()
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .into(sideNavHeaderBinding.headerProfilePic);
         }
     }
 
