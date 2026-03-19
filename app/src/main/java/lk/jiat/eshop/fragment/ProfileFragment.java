@@ -1,5 +1,6 @@
 package lk.jiat.eshop.fragment;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -61,6 +63,7 @@ public class ProfileFragment extends Fragment {
                         if (ds.exists()) {
                             currentUser = ds.toObject(User.class);
                             if (currentUser != null) {
+                                String name = (currentUser.getName() != null && !currentUser.getName().isEmpty()) ? currentUser.getName() : "User";
                                 binding.profileName.setText(currentUser.getName());
                                 binding.profileEmail.setText(currentUser.getEmail());
                                 binding.profileContact.setText(currentUser.getContact());
@@ -77,14 +80,32 @@ public class ProfileFragment extends Fragment {
                                                     Glide.with(ProfileFragment.this)
                                                             .load(uri)
                                                             .circleCrop()
+                                                            .diskCacheStrategy(DiskCacheStrategy.ALL)
                                                             .placeholder(R.drawable.person_24)
                                                             .into(binding.profileImage);
                                                 }
-                                            });
+                                            })
+                                            .addOnFailureListener(e -> loadDynamicAvatar(name));
+                                } else {
+                                    loadDynamicAvatar(name);
                                 }
                             }
                         }
                     });
+        }
+    }
+
+    private void loadDynamicAvatar(String name) {
+        // background=001F3F matches your md_theme_primary
+        String initialsUrl = "https://ui-avatars.com/api/?name=" + Uri.encode(name) + "&background=001F3F&color=fff&size=256&bold=true";
+        if (isAdded()) {
+            Glide.with(ProfileFragment.this)
+                    .load(initialsUrl)
+                    .circleCrop()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .placeholder(R.drawable.person_24)
+                    .error(R.drawable.person_24)
+                    .into(binding.profileImage);
         }
     }
 
@@ -118,6 +139,7 @@ public class ProfileFragment extends Fragment {
         db.collection("users").document(currentUser.getUid()).set(currentUser)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+                    loadUserData();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();

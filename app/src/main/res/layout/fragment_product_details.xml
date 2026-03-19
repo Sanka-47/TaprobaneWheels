@@ -160,9 +160,15 @@
 
             <include
                 android:id="@+id/product_details_top_sell_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            layout="@layout/item_section"/>
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                layout="@layout/item_section"/>
+
+            <include
+                android:id="@+id/product_details_recent_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                layout="@layout/item_section"/>
 
         </LinearLayout>
 
