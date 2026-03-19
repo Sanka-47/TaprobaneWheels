@@ -1,11 +1,18 @@
 package lk.jiat.eshop.fragment;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -18,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import lk.jiat.eshop.databinding.FragmentSettingsBinding;
+import lk.jiat.eshop.receiver.MyNotificationReceiver;
 
 public class SettingsFragment extends Fragment {
 
@@ -25,6 +33,9 @@ public class SettingsFragment extends Fragment {
     private static final String PREFS_NAME = "AppPrefs";
     private static final String KEY_NOTIFICATIONS = "notifications_enabled";
     private static final String KEY_REMEMBER_ME = "remember_me";
+
+    private String pendingTitle;
+    private String pendingMessage;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -50,6 +61,8 @@ public class SettingsFragment extends Fragment {
 
         binding.switchRememberMe.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean(KEY_REMEMBER_ME, isChecked).apply();
+            String status = isChecked ? "Enabled" : "Disabled";
+            checkAndSendNotification("Remember Me Updated", "Remember Me has been " + status);
         });
 
         // 2. Internal Storage & Cache Management Implementation
@@ -57,8 +70,45 @@ public class SettingsFragment extends Fragment {
             clearAppCache();
         });
 
+        // 3. Notifications Broadcast Implementation
+        /*
+        binding.btnTestNotification.setOnClickListener(v -> {
+            checkAndSendNotification("EShop Test Notification", "This is a broadcast notification triggered from Settings!");
+        });
+        */
+
         // Example of Internal Storage usage: saving a simple log file
         saveLastSettingsVisit();
+    }
+
+    private void checkAndSendNotification(String title, String message) {
+        this.pendingTitle = title;
+        this.pendingMessage = message;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                sendNotificationBroadcast(title, message);
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        } else {
+            sendNotificationBroadcast(title, message);
+        }
+    }
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    sendNotificationBroadcast(pendingTitle, pendingMessage);
+                } else {
+                    Toast.makeText(getContext(), "Permission denied to show notifications", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+    private void sendNotificationBroadcast(String title, String message) {
+        Intent intent = new Intent(requireContext(), MyNotificationReceiver.class);
+        intent.putExtra("title", title);
+        intent.putExtra("message", message);
+        requireContext().sendBroadcast(intent);
     }
 
     private void saveLastSettingsVisit() {

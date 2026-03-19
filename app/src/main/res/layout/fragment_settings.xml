@@ -35,6 +35,29 @@
         android:layout_marginVertical="16dp"
         android:background="?android:attr/listDivider" />
 
+    <!--
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Notifications Test"
+        android:textSize="18sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_test_notification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Test Broadcast Notification"
+        app:icon="@drawable/message_24" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="16dp"
+        android:background="?android:attr/listDivider" />
+    -->
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
