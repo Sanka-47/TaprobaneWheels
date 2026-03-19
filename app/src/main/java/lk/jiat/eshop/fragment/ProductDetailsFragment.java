@@ -45,6 +45,7 @@ import lk.jiat.eshop.activity.MainActivity;
 import lk.jiat.eshop.activity.SignInActivity;
 import lk.jiat.eshop.adapter.ProductSliderAdapter;
 import lk.jiat.eshop.adapter.SectionAdapter;
+import lk.jiat.eshop.config.SQLiteHelper;
 import lk.jiat.eshop.databinding.FragmentProductDetailsBinding;
 import lk.jiat.eshop.model.CartItem;
 import lk.jiat.eshop.model.Product;
@@ -68,6 +69,8 @@ public class ProductDetailsFragment extends Fragment {
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
 
+    private SQLiteHelper sqliteHelper;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +84,8 @@ public class ProductDetailsFragment extends Fragment {
         mShakeDetector.setOnShakeListener(count -> {
             shareProduct();
         });
+
+        sqliteHelper = new SQLiteHelper(getContext());
     }
 
     @Override
@@ -129,6 +134,10 @@ public class ProductDetailsFragment extends Fragment {
                             renderAttribute(attribute, binding.productDetailsAttributeContainer);
                         });
                     }
+
+                    // Save to SQLite Recently Viewed
+                    sqliteHelper.addRecentlyViewed(currentProduct);
+                    loadRecentlyViewed();
 
                 }
             }
@@ -330,6 +339,35 @@ public class ProductDetailsFragment extends Fragment {
             }
         });
 
+    }
+
+    private void loadRecentlyViewed() {
+        List<Product> recentProducts = sqliteHelper.getRecentlyViewed();
+        
+        if (!recentProducts.isEmpty()) {
+            binding.productDetailsRecentSection.getRoot().setVisibility(View.VISIBLE);
+            
+            LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
+            binding.productDetailsRecentSection.itemSectionContainer.setLayoutManager(layoutManager);
+
+            SectionAdapter adapter = new SectionAdapter(recentProducts, product -> {
+                Bundle bundle = new Bundle();
+                bundle.putString("productId", product.getProductId());
+
+                ProductDetailsFragment productDetailsFragment = new ProductDetailsFragment();
+                productDetailsFragment.setArguments(bundle);
+
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, productDetailsFragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+
+            binding.productDetailsRecentSection.itemSectionTitle.setText("Recently Viewed");
+            binding.productDetailsRecentSection.itemSectionContainer.setAdapter(adapter);
+        } else {
+            binding.productDetailsRecentSection.getRoot().setVisibility(View.GONE);
+        }
     }
 
     private void renderAttribute(Product.Attribute attribute, ViewGroup container) {
