@@ -66,6 +66,7 @@ public class CategoryFragment extends Fragment {
 
                             });
                             binding.recyclerViewCategories.setAdapter(adapter);
+                            binding.recyclerViewCategories.scheduleLayoutAnimation();
                         }
                     }
                 });

@@ -116,6 +116,7 @@ public class ProductDetailsFragment extends Fragment {
 
                     ProductSliderAdapter adapter = new ProductSliderAdapter(currentProduct.getImages());
                     binding.productImageSlider.setAdapter(adapter);
+                    binding.productImageSlider.scheduleLayoutAnimation();
 
                     binding.dotsIndicator.attachTo(binding.productImageSlider);
 
@@ -334,6 +335,7 @@ public class ProductDetailsFragment extends Fragment {
 
                     binding.productDetailsTopSellSection.itemSectionTitle.setText("Top Selling Products");
                     binding.productDetailsTopSellSection.itemSectionContainer.setAdapter(adapter);
+                    binding.productDetailsTopSellSection.itemSectionContainer.scheduleLayoutAnimation();
 
                 }
             }
@@ -365,6 +367,7 @@ public class ProductDetailsFragment extends Fragment {
 
             binding.productDetailsRecentSection.itemSectionTitle.setText("Recently Viewed");
             binding.productDetailsRecentSection.itemSectionContainer.setAdapter(adapter);
+            binding.productDetailsRecentSection.itemSectionContainer.scheduleLayoutAnimation();
         } else {
             binding.productDetailsRecentSection.getRoot().setVisibility(View.GONE);
         }

@@ -164,5 +164,21 @@
             android:layout_height="wrap_content"
             android:padding="16dp" />
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/intro_video_container"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_margin="16dp"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="4dp">
+
+            <VideoView
+                android:id="@+id/intro_video_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center" />
+
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -19,7 +19,8 @@
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/product_image_slider"
                 android:layout_width="match_parent"
-                android:layout_height="300dp"/>
+                android:layout_height="300dp"
+                android:layoutAnimation="@anim/layout_animation_fall_down" />
 
             <com.tbuonomo.viewpagerdotsindicator.DotsIndicator
                 android:id="@+id/dotsIndicator"
