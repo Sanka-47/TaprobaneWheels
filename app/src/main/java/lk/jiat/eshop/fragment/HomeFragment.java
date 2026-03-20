@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -61,8 +62,37 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         currentAcceleration = SensorManager.GRAVITY_EARTH;
         lastAcceleration = SensorManager.GRAVITY_EARTH;
 
+        setupIntroVideo();
         loadTopSellProduct();
 
+    }
+
+    private void setupIntroVideo() {
+        Uri videoUri = Uri.parse("android.resource://" + requireContext().getPackageName() + "/" + R.raw.intro);
+        binding.introVideoView.setVideoURI(videoUri);
+        
+        binding.introVideoView.setOnPreparedListener(mp -> {
+            mp.setLooping(true);
+            mp.setVolume(0, 0); // Mute the video
+            float videoRatio = mp.getVideoWidth() / (float) mp.getVideoHeight();
+            float screenRatio = binding.introVideoView.getWidth() / (float) binding.introVideoView.getHeight();
+            float scaleX = videoRatio / screenRatio;
+
+            if (scaleX >= 1f) {
+                binding.introVideoView.setScaleX(scaleX);
+            } else {
+                binding.introVideoView.setScaleY(1f / scaleX);
+            }
+            binding.introVideoView.start();
+        });
+        
+        binding.introVideoContainer.setOnClickListener(v -> {
+            if (binding.introVideoView.isPlaying()) {
+                binding.introVideoView.pause();
+            } else {
+                binding.introVideoView.start();
+            }
+        });
     }
 
     @Override
@@ -71,6 +101,9 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         if (sensorManager != null) {
             sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
         }
+        if (binding != null && !binding.introVideoView.isPlaying()) {
+            binding.introVideoView.start();
+        }
     }
 
     @Override
@@ -78,6 +111,9 @@ public class HomeFragment extends Fragment implements SensorEventListener {
         super.onPause();
         if (sensorManager != null) {
             sensorManager.unregisterListener(this);
+        }
+        if (binding != null && binding.introVideoView.isPlaying()) {
+            binding.introVideoView.pause();
         }
     }
 
@@ -136,10 +172,17 @@ public class HomeFragment extends Fragment implements SensorEventListener {
 
                             binding.homeTopSellSection.itemSectionTitle.setText("Top Selling Products");
                             binding.homeTopSellSection.itemSectionContainer.setAdapter(adapter);
+                            binding.homeTopSellSection.itemSectionContainer.scheduleLayoutAnimation();
 
                         }
                     }
                 });
 
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
