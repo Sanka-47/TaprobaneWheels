@@ -1,7 +1,6 @@
 package lk.jiat.eshop.model;
 
-import com.google.firebase.Timestamp;
-
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -14,14 +13,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Order {
+public class Order implements Serializable {
     private String orderId;
     private String userId;
     private double totalAmount;
     private String status;
     @Builder.Default
     private String shippingStatus = "Processing";
-    private Timestamp orderDate;
+    private Date orderDate;
     private List<OrderItem> orderItems;
     private Address shippingAddress;
     private Address billingAddress;
@@ -30,8 +29,9 @@ public class Order {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OrderItem {
+    public static class OrderItem implements Serializable {
         private String productId;
+        private String productTitle;
         private double unitPrice;
         private int quantity;
         private List<OrderItem.Attribute> attributes;
@@ -40,7 +40,7 @@ public class Order {
         @Builder
         @AllArgsConstructor
         @NoArgsConstructor
-        public static class Attribute {
+        public static class Attribute implements Serializable {
             private String name;
             private String value;
         }
@@ -51,7 +51,7 @@ public class Order {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Address {
+    public static class Address implements Serializable {
         private String name;
         private String email;
         private String contact;

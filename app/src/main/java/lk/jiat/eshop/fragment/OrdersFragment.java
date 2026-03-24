@@ -21,8 +21,8 @@ import com.google.firebase.firestore.Query;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import lk.jiat.eshop.R;
 import lk.jiat.eshop.adapter.OrderAdapter;
 import lk.jiat.eshop.databinding.FragmentOrdersBinding;
 import lk.jiat.eshop.model.Order;
@@ -48,6 +48,15 @@ public class OrdersFragment extends Fragment {
 
         binding.ordersRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new OrderAdapter(filteredOrders);
+        
+        adapter.setOnOrderClickListener(order -> {
+            InvoiceFragment invoiceFragment = InvoiceFragment.newInstance(order);
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, invoiceFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
         binding.ordersRecyclerView.setAdapter(adapter);
 
         setupSearch();
@@ -88,13 +97,13 @@ public class OrdersFragment extends Fragment {
         binding.btnSortOrders.setOnClickListener(v -> {
             isAscending = !isAscending;
             sortOrders();
-            // Optional: update icon or UI based on sort order
             binding.btnSortOrders.setRotation(isAscending ? 180f : 0f);
         });
     }
 
     private void sortOrders() {
         Collections.sort(filteredOrders, (o1, o2) -> {
+            if (o1.getOrderDate() == null || o2.getOrderDate() == null) return 0;
             if (isAscending) {
                 return o1.getOrderDate().compareTo(o2.getOrderDate());
             } else {
@@ -126,7 +135,6 @@ public class OrdersFragment extends Fragment {
                         filteredOrders.addAll(allOrders);
                         adapter.notifyDataSetChanged();
                     }).addOnFailureListener(e -> {
-                        // Handle failure, e.g., if index is missing
                         db.collection("orders")
                                 .whereEqualTo("userId", uid)
                                 .get()

@@ -29,6 +29,15 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseStorage storage = FirebaseStorage.getInstance();
+    private OnOrderClickListener listener;
+
+    public interface OnOrderClickListener {
+        void onOrderClick(Order order);
+    }
+
+    public void setOnOrderClickListener(OnOrderClickListener listener) {
+        this.listener = listener;
+    }
 
     public OrderAdapter(List<Order> orders) {
         this.orders = orders;
@@ -46,18 +55,23 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Order order = orders.get(position);
 
-        holder.orderId.setText("Order #" + order.getOrderId());
+        holder.orderId.setText(String.format("Order #%s", order.getOrderId()));
         holder.orderStatus.setText(order.getStatus());
         holder.orderTotal.setText(String.format(Locale.US, "LKR %,.2f", order.getTotalAmount()));
         holder.shippingStatus.setText(order.getShippingStatus());
 
         if (order.getOrderDate() != null) {
-            holder.orderDate.setText(dateFormat.format(order.getOrderDate().toDate()));
+            holder.orderDate.setText(dateFormat.format(order.getOrderDate()));
         } else {
             holder.orderDate.setText("N/A");
         }
 
-        // Clear previous items to avoid duplication in recycled views
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onOrderClick(order);
+            }
+        });
+
         holder.itemsContainer.removeAllViews();
 
         if (order.getOrderItems() != null) {
@@ -71,13 +85,18 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
 
                 qtyPriceTv.setText(String.format(Locale.US, "Qty: %d x LKR %,.2f", item.getQuantity(), item.getUnitPrice()));
 
-                // Load product details from Firestore to get title and image
+                if (item.getProductTitle() != null && !item.getProductTitle().isEmpty()) {
+                    titleTv.setText(item.getProductTitle());
+                }
+
                 db.collection("products").whereEqualTo("productId", item.getProductId()).get()
                         .addOnSuccessListener(qds -> {
                             if (!qds.isEmpty()) {
                                 Product product = qds.getDocuments().get(0).toObject(Product.class);
                                 if (product != null) {
-                                    titleTv.setText(product.getTitle());
+                                    if (item.getProductTitle() == null || item.getProductTitle().isEmpty()) {
+                                        titleTv.setText(product.getTitle());
+                                    }
                                     
                                     if (product.getImages() != null && !product.getImages().isEmpty()) {
                                         String imagePath = product.getImages().get(0);

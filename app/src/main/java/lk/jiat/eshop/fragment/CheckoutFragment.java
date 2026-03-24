@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.transition.TransitionManager;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,18 +17,15 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -290,7 +286,7 @@ public class CheckoutFragment extends Fragment {
             order.setUserId(uid);
             order.setTotalAmount(total);
             order.setStatus("PAID");
-            order.setOrderDate(Timestamp.now());
+            order.setOrderDate(new Date());
 
 
             String shipping_name = binding.shippingDetailsName.getText().toString();
@@ -330,13 +326,11 @@ public class CheckoutFragment extends Fragment {
             getProductsByIds(productIds, data -> {
 
                 WriteBatch batch = db.batch();
-                Product firstProduct = null;
 
                 for (CartItem cartItem : cartItems) {
                     Product product = data.get(cartItem.getProductId());
 
                     if (product != null) {
-                        if (firstProduct == null) firstProduct = product;
 
                         List<Order.OrderItem.Attribute> attributes = new ArrayList<>();
 
@@ -346,7 +340,13 @@ public class CheckoutFragment extends Fragment {
                             attributes.add(attribute);
                         }
 
-                        Order.OrderItem orderItem = Order.OrderItem.builder().productId(cartItem.getProductId()).unitPrice(product.getPrice()).quantity(cartItem.getQuantity()).attributes(attributes).build();
+                        Order.OrderItem orderItem = Order.OrderItem.builder()
+                                .productId(cartItem.getProductId())
+                                .productTitle(product.getTitle())
+                                .unitPrice(product.getPrice())
+                                .quantity(cartItem.getQuantity())
+                                .attributes(attributes)
+                                .build();
                         orderItems.add(orderItem);
 
                         // Deduct stock quantity using actual Document ID
@@ -359,8 +359,6 @@ public class CheckoutFragment extends Fragment {
 
                 DocumentReference orderRef = db.collection("orders").document();
                 batch.set(orderRef, order);
-
-                final Product purchasedProduct = firstProduct;
 
                 batch.commit().addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Order Saved!", Toast.LENGTH_SHORT).show();
@@ -375,19 +373,12 @@ public class CheckoutFragment extends Fragment {
                             });
 
 
-                    Bundle bundle = new Bundle();
-                    if (purchasedProduct != null) {
-                        bundle.putString("productName", purchasedProduct.getTitle());
-                        if (purchasedProduct.getImages() != null && !purchasedProduct.getImages().isEmpty()) {
-                            bundle.putString("productImage", purchasedProduct.getImages().get(0));
-                        }
-                    }
-
-                    NearbyShopsFragment nearbyShopsFragment = new NearbyShopsFragment();
-                    nearbyShopsFragment.setArguments(bundle);
+                    // Navigate to Invoice Fragment
+                    InvoiceFragment invoiceFragment = InvoiceFragment.newInstance(order);
 
                     getParentFragmentManager().beginTransaction()
-                            .replace(R.id.fragment_container, nearbyShopsFragment)
+                            .replace(R.id.fragment_container, invoiceFragment)
+                            .addToBackStack(null)
                             .commit();
 
                 });
