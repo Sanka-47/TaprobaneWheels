@@ -3,6 +3,7 @@ package lk.jiat.eshop.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -66,7 +67,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
             holder.orderDate.setText("N/A");
         }
 
-        holder.itemView.setOnClickListener(v -> {
+        holder.btnViewInvoice.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onOrderClick(order);
             }
@@ -133,6 +134,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView orderId, orderStatus, orderDate, orderTotal, shippingStatus;
         LinearLayout itemsContainer;
+        Button btnViewInvoice;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -142,6 +144,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
             orderTotal = itemView.findViewById(R.id.item_order_total);
             shippingStatus = itemView.findViewById(R.id.item_order_shipping_status);
             itemsContainer = itemView.findViewById(R.id.item_order_items_container);
+            btnViewInvoice = itemView.findViewById(R.id.item_order_btn_view_invoice);
         }
     }
 }
