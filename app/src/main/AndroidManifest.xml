@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -14,6 +16,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EShop">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA2MvHZfDiiYHtERcgDVqBiD63Aa78lKy0" />
+
+        <property android:name="android.content.PROPERTY_ATTRIBUTION_TAG_NAMES" android:value="lk.jiat.eshop" />
+
 
         <receiver
             android:name=".receiver.MyNotificationReceiver"

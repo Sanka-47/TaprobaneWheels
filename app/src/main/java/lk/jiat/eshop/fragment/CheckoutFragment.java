@@ -330,11 +330,13 @@ public class CheckoutFragment extends Fragment {
             getProductsByIds(productIds, data -> {
 
                 WriteBatch batch = db.batch();
+                Product firstProduct = null;
 
                 for (CartItem cartItem : cartItems) {
                     Product product = data.get(cartItem.getProductId());
 
                     if (product != null) {
+                        if (firstProduct == null) firstProduct = product;
 
                         List<Order.OrderItem.Attribute> attributes = new ArrayList<>();
 
@@ -358,6 +360,8 @@ public class CheckoutFragment extends Fragment {
                 DocumentReference orderRef = db.collection("orders").document();
                 batch.set(orderRef, order);
 
+                final Product purchasedProduct = firstProduct;
+
                 batch.commit().addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Order Saved!", Toast.LENGTH_SHORT).show();
 
@@ -371,8 +375,19 @@ public class CheckoutFragment extends Fragment {
                             });
 
 
+                    Bundle bundle = new Bundle();
+                    if (purchasedProduct != null) {
+                        bundle.putString("productName", purchasedProduct.getTitle());
+                        if (purchasedProduct.getImages() != null && !purchasedProduct.getImages().isEmpty()) {
+                            bundle.putString("productImage", purchasedProduct.getImages().get(0));
+                        }
+                    }
+
+                    NearbyShopsFragment nearbyShopsFragment = new NearbyShopsFragment();
+                    nearbyShopsFragment.setArguments(bundle);
+
                     getParentFragmentManager().beginTransaction()
-                            .replace(R.id.fragment_container, new HomeFragment())
+                            .replace(R.id.fragment_container, nearbyShopsFragment)
                             .commit();
 
                 });

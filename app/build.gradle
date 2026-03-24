@@ -5,11 +5,7 @@ plugins {
 
 android {
     namespace 'lk.jiat.eshop'
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk 36
 
     defaultConfig {
         applicationId "lk.jiat.eshop"
@@ -59,5 +55,8 @@ dependencies {
     implementation libs.payhere.android.sdk
     implementation libs.gson
     implementation libs.photoview
+
+    implementation libs.play.services.maps
+    implementation libs.play.services.location
 
 }

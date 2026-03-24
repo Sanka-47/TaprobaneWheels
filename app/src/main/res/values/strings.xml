@@ -7,6 +7,7 @@
     <string name="side_nav_orders_title">Orders</string>
     <string name="side_nav_wishlist_title">Wishlist</string>
     <string name="side_nav_cart_title">Cart</string>
+    <string name="side_nav_nearby_shops_title">Nearby Shops</string>
     <string name="side_nav_message_title">Message</string>
     <string name="side_nav_settings_title">Settings</string>
     <string name="side_nav_login_title">Login</string>

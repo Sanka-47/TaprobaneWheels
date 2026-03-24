@@ -16,6 +16,8 @@ payhereAndroidSdk = "v3.0.18"
 picasso = "2.71828"
 preference = "1.2.1"
 photoview = "2.3.0"
+playServicesMaps = "19.0.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 dotsindicator = { module = "com.tbuonomo:dotsindicator", version.ref = "dotsindicator" }
@@ -38,6 +40,8 @@ payhere-android-sdk = { module = "com.github.PayHereDevs:payhere-android-sdk", v
 picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoview" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

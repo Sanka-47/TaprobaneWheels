@@ -63,6 +63,7 @@ import lk.jiat.eshop.fragment.CategoryFragment;
 import lk.jiat.eshop.fragment.HomeFragment;
 import lk.jiat.eshop.fragment.ListingFragment;
 import lk.jiat.eshop.fragment.MessageFragment;
+import lk.jiat.eshop.fragment.NearbyShopsFragment;
 import lk.jiat.eshop.fragment.OrdersFragment;
 import lk.jiat.eshop.fragment.ProductDetailsFragment;
 import lk.jiat.eshop.fragment.ProfileFragment;
@@ -241,6 +242,7 @@ public class MainActivity extends AppCompatActivity
 
     private void updateSideNavHeader() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        
         if (currentUser != null) {
             // Initial UI state while loading Firestore
             String displayName = currentUser.getDisplayName();
@@ -284,13 +286,14 @@ public class MainActivity extends AppCompatActivity
                     });
 
             // Update Menu Visibility
-            navigationView.getMenu().findItem(R.id.side_nav_login).setVisible(false);
-            navigationView.getMenu().findItem(R.id.side_nav_profile).setVisible(true);
-            navigationView.getMenu().findItem(R.id.side_nav_orders).setVisible(true);
-            navigationView.getMenu().findItem(R.id.side_nav_wishlist).setVisible(true);
-            navigationView.getMenu().findItem(R.id.side_nav_cart).setVisible(true);
-            navigationView.getMenu().findItem(R.id.side_nav_message).setVisible(true);
-            navigationView.getMenu().findItem(R.id.side_nav_logout).setVisible(true);
+            setMenuItemVisible(R.id.side_nav_login, false);
+            setMenuItemVisible(R.id.side_nav_profile, true);
+            setMenuItemVisible(R.id.side_nav_orders, true);
+            setMenuItemVisible(R.id.side_nav_wishlist, true);
+            setMenuItemVisible(R.id.side_nav_cart, true);
+            setMenuItemVisible(R.id.side_nav_nearby_shops, true);
+            setMenuItemVisible(R.id.side_nav_message, true);
+            setMenuItemVisible(R.id.side_nav_logout, true);
 
             sideNavHeaderBinding.headerProfilePic.setOnClickListener(v -> {
                 Intent intent = new Intent();
@@ -303,13 +306,23 @@ public class MainActivity extends AppCompatActivity
             sideNavHeaderBinding.headerUserEmail.setText("");
             sideNavHeaderBinding.headerProfilePic.setImageResource(R.drawable.person_24);
             
-            navigationView.getMenu().findItem(R.id.side_nav_login).setVisible(true);
-            navigationView.getMenu().findItem(R.id.side_nav_profile).setVisible(false);
-            navigationView.getMenu().findItem(R.id.side_nav_orders).setVisible(false);
-            navigationView.getMenu().findItem(R.id.side_nav_wishlist).setVisible(false);
-            navigationView.getMenu().findItem(R.id.side_nav_cart).setVisible(false);
-            navigationView.getMenu().findItem(R.id.side_nav_message).setVisible(false);
-            navigationView.getMenu().findItem(R.id.side_nav_logout).setVisible(false);
+            setMenuItemVisible(R.id.side_nav_login, true);
+            setMenuItemVisible(R.id.side_nav_profile, false);
+            setMenuItemVisible(R.id.side_nav_orders, false);
+            setMenuItemVisible(R.id.side_nav_wishlist, false);
+            setMenuItemVisible(R.id.side_nav_cart, false);
+            setMenuItemVisible(R.id.side_nav_nearby_shops, true);
+            setMenuItemVisible(R.id.side_nav_message, false);
+            setMenuItemVisible(R.id.side_nav_logout, false);
+        }
+    }
+
+    private void setMenuItemVisible(int id, boolean visible) {
+        if (navigationView != null) {
+            MenuItem item = navigationView.getMenu().findItem(id);
+            if (item != null) {
+                item.setVisible(visible);
+            }
         }
     }
 
@@ -385,6 +398,8 @@ public class MainActivity extends AppCompatActivity
             } else {
                 loadFragment(new CartFragment(), true);
             }
+        } else if (itemId == R.id.side_nav_nearby_shops) {
+            loadFragment(new NearbyShopsFragment(), true);
         } else if (itemId == R.id.side_nav_message) {
             loadFragment(new MessageFragment(), true);
         } else if (itemId == R.id.side_nav_settings) {
@@ -428,15 +443,21 @@ public class MainActivity extends AppCompatActivity
         Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         if (currentFragment instanceof HomeFragment) {
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_home).setChecked(true);
-            navigationView.getMenu().findItem(R.id.side_nav_home).setChecked(true);
+            MenuItem homeItem = navigationView.getMenu().findItem(R.id.side_nav_home);
+            if (homeItem != null) homeItem.setChecked(true);
         } else if (currentFragment instanceof CategoryFragment || currentFragment instanceof ListingFragment) {
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_category).setChecked(true);
         } else if (currentFragment instanceof CartFragment) {
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_cart).setChecked(true);
-            navigationView.getMenu().findItem(R.id.side_nav_cart).setChecked(true);
+            MenuItem cartItem = navigationView.getMenu().findItem(R.id.side_nav_cart);
+            if (cartItem != null) cartItem.setChecked(true);
         } else if (currentFragment instanceof ProfileFragment) {
             bottomNavigationView.getMenu().findItem(R.id.bottom_nav_profile).setChecked(true);
-            navigationView.getMenu().findItem(R.id.side_nav_profile).setChecked(true);
+            MenuItem profileItem = navigationView.getMenu().findItem(R.id.side_nav_profile);
+            if (profileItem != null) profileItem.setChecked(true);
+        } else if (currentFragment instanceof NearbyShopsFragment) {
+            MenuItem nearbyItem = navigationView.getMenu().findItem(R.id.side_nav_nearby_shops);
+            if (nearbyItem != null) nearbyItem.setChecked(true);
         }
     }
 
