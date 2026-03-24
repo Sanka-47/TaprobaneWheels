@@ -1,15 +1,25 @@
 package lk.jiat.eshop.fragment;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
@@ -21,6 +31,15 @@ public class InvoiceFragment extends Fragment {
 
     private FragmentInvoiceBinding binding;
     private Order order;
+
+    private final ActivityResultLauncher<String> createDocumentLauncher = registerForActivityResult(
+            new ActivityResultContracts.CreateDocument("application/pdf"),
+            uri -> {
+                if (uri != null) {
+                    savePdf(uri);
+                }
+            }
+    );
 
     public InvoiceFragment() {
         // Required empty public constructor
@@ -53,9 +72,12 @@ public class InvoiceFragment extends Fragment {
             updateUI();
         }
 
+        binding.invoiceBtnSavePdf.setOnClickListener(v -> {
+            String fileName = "Invoice_" + (order != null ? order.getOrderId() : System.currentTimeMillis()) + ".pdf";
+            createDocumentLauncher.launch(fileName);
+        });
+
         binding.invoiceBtnDone.setOnClickListener(v -> {
-            // Navigate to Home or maybe NearbyShops as originally intended in CheckoutFragment
-            // Let's go to HomeFragment for now as a generic "Done" action
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new HomeFragment())
                     .commit();
@@ -69,7 +91,6 @@ public class InvoiceFragment extends Fragment {
         
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
         if (order.getOrderDate() != null) {
-            // orderDate is now java.util.Date
             binding.invoiceDate.setText(sdf.format(order.getOrderDate()));
         }
 
@@ -105,5 +126,38 @@ public class InvoiceFragment extends Fragment {
 
         binding.invoiceSubtotal.setText(String.format(Locale.US, "LKR %,.2f", subtotal));
         binding.invoiceTotal.setText(String.format(Locale.US, "LKR %,.2f", order.getTotalAmount()));
+    }
+
+    private void savePdf(Uri uri) {
+        View content = binding.invoiceContentLayout;
+        
+        // Create a PDF Document
+        PdfDocument pdfDocument = new PdfDocument();
+        
+        // Define page info based on the content view dimensions
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(content.getWidth(), content.getHeight(), 1).create();
+        
+        // Start a page
+        PdfDocument.Page page = pdfDocument.startPage(pageInfo);
+        
+        Canvas canvas = page.getCanvas();
+        content.draw(canvas);
+        
+        // Finish the page
+        pdfDocument.finishPage(page);
+
+        try {
+            OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
+            if (outputStream != null) {
+                pdfDocument.writeTo(outputStream);
+                outputStream.close();
+                Toast.makeText(getContext(), "Invoice saved as PDF", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e("InvoiceFragment", "Error saving PDF: " + e.getMessage());
+            Toast.makeText(getContext(), "Failed to save PDF", Toast.LENGTH_SHORT).show();
+        } finally {
+            pdfDocument.close();
+        }
     }
 }
