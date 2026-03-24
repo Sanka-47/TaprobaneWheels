@@ -32,6 +32,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -200,18 +201,34 @@ public class ProductDetailsFragment extends Fragment {
                     return;
                 }
 
-                CartItem cartItem = new CartItem(productId, quantity, attributes);
-
                 String uid = firebaseAuth.getCurrentUser().getUid();
 
-                db.collection("users").document(uid).collection("cart").document()
-                        .set(cartItem)
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Toast.makeText(getContext(), "Item added to cart!", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                // Check for existing identical item in cart
+                db.collection("users").document(uid).collection("cart")
+                        .whereEqualTo("productId", productId)
+                        .get()
+                        .addOnSuccessListener(qds -> {
+                            boolean found = false;
+                            for (DocumentSnapshot ds : qds.getDocuments()) {
+                                CartItem existing = ds.toObject(CartItem.class);
+                                if (existing != null && isSameConfiguration(existing.getAttributes(), attributes)) {
+                                    ds.getReference().update("quantity", FieldValue.increment(quantity))
+                                            .addOnSuccessListener(aVoid -> {
+                                                Toast.makeText(getContext(), "Quantity updated in cart!", Toast.LENGTH_SHORT).show();
+                                            });
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!found) {
+                                CartItem cartItem = new CartItem(productId, quantity, attributes);
+                                db.collection("users").document(uid).collection("cart").add(cartItem)
+                                        .addOnSuccessListener(unused -> {
+                                            Toast.makeText(getContext(), "Item added to cart!", Toast.LENGTH_SHORT).show();
+                                        });
+                            }
+                        });
             }
 
 
@@ -224,6 +241,23 @@ public class ProductDetailsFragment extends Fragment {
         });
 
 
+    }
+
+    private boolean isSameConfiguration(List<CartItem.Attribute> list1, List<CartItem.Attribute> list2) {
+        if (list1 == null || list2 == null) return list1 == list2;
+        if (list1.size() != list2.size()) return false;
+
+        for (CartItem.Attribute a1 : list1) {
+            boolean match = false;
+            for (CartItem.Attribute a2 : list2) {
+                if (a1.getName().equalsIgnoreCase(a2.getName()) && a1.getValue().equalsIgnoreCase(a2.getValue())) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) return false;
+        }
+        return true;
     }
 
     @Override
