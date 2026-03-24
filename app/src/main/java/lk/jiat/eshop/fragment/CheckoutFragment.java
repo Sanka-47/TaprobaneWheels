@@ -321,11 +321,10 @@ public class CheckoutFragment extends Fragment {
                 productIds.add(cartItem.getProductId());
             });
 
-            List<Order.OrderItem> orderItems = new ArrayList<>();
-
             getProductsByIds(productIds, data -> {
 
                 WriteBatch batch = db.batch();
+                Map<String, Order.OrderItem> aggregatedItems = new HashMap<>();
 
                 for (CartItem cartItem : cartItems) {
                     Product product = data.get(cartItem.getProductId());
@@ -333,21 +332,36 @@ public class CheckoutFragment extends Fragment {
                     if (product != null) {
 
                         List<Order.OrderItem.Attribute> attributes = new ArrayList<>();
+                        String colorValue = "";
+                        String sizeValue = "";
 
                         for (CartItem.Attribute at : cartItem.getAttributes()) {
                             Order.OrderItem.Attribute attribute = Order.OrderItem.Attribute.builder().name(at.getName()).value(at.getValue()).build();
-
                             attributes.add(attribute);
+                            
+                            if (at.getName().equalsIgnoreCase("Color")) {
+                                colorValue = at.getValue();
+                            } else if (at.getName().equalsIgnoreCase("Rim Size") || at.getName().equalsIgnoreCase("Size")) {
+                                sizeValue = at.getValue();
+                            }
                         }
 
-                        Order.OrderItem orderItem = Order.OrderItem.builder()
-                                .productId(cartItem.getProductId())
-                                .productTitle(product.getTitle())
-                                .unitPrice(product.getPrice())
-                                .quantity(cartItem.getQuantity())
-                                .attributes(attributes)
-                                .build();
-                        orderItems.add(orderItem);
+                        // Generate a key based on product ID, color, and size
+                        String itemKey = cartItem.getProductId() + "_" + colorValue + "_" + sizeValue;
+
+                        if (aggregatedItems.containsKey(itemKey)) {
+                            Order.OrderItem existingItem = aggregatedItems.get(itemKey);
+                            existingItem.setQuantity(existingItem.getQuantity() + cartItem.getQuantity());
+                        } else {
+                            Order.OrderItem orderItem = Order.OrderItem.builder()
+                                    .productId(cartItem.getProductId())
+                                    .productTitle(product.getTitle())
+                                    .unitPrice(product.getPrice())
+                                    .quantity(cartItem.getQuantity())
+                                    .attributes(attributes)
+                                    .build();
+                            aggregatedItems.put(itemKey, orderItem);
+                        }
 
                         // Deduct stock quantity using actual Document ID
                         DocumentReference productRef = db.collection("products").document(product.getId());
@@ -355,7 +369,7 @@ public class CheckoutFragment extends Fragment {
 
                     }
                 }
-                order.setOrderItems(orderItems);
+                order.setOrderItems(new ArrayList<>(aggregatedItems.values()));
 
                 DocumentReference orderRef = db.collection("orders").document();
                 batch.set(orderRef, order);
