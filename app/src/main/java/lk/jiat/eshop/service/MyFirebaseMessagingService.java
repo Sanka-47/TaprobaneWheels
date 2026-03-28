@@ -59,7 +59,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "EShop Notifications", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "EShop Notifications", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Notifications for order updates and EShop activities");
+            channel.enableLights(true);
+            channel.setLightColor(android.graphics.Color.RED);
+            channel.enableVibration(true);
             notificationManager.createNotificationChannel(channel);
         }
 
@@ -68,11 +72,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.shopping_cart_24) // Replace with your app icon
+                .setSmallIcon(R.drawable.shopping_cart_24)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setContentIntent(pendingIntent);
 
         notificationManager.notify((int) System.currentTimeMillis(), builder.build());
