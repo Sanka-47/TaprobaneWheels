@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -263,6 +264,9 @@ public class MainActivity extends AppCompatActivity
                                     storage.getReference("profile-images/" + user.getProfilePicUrl()).getDownloadUrl()
                                             .addOnSuccessListener(uri -> {
                                                 if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
+                                                    sideNavHeaderBinding.headerProfilePic.setVisibility(View.VISIBLE);
+                                                    sideNavHeaderBinding.headerProfilePicDynamic.setVisibility(View.GONE);
+
                                                     Glide.with(MainActivity.this)
                                                             .load(uri)
                                                             .circleCrop()
@@ -295,16 +299,21 @@ public class MainActivity extends AppCompatActivity
             setMenuItemVisible(R.id.side_nav_message, true);
             setMenuItemVisible(R.id.side_nav_logout, true);
 
-            sideNavHeaderBinding.headerProfilePic.setOnClickListener(v -> {
+            View.OnClickListener profileClickListener = v -> {
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 activityResultLauncher.launch(intent);
-            });
+            };
+            sideNavHeaderBinding.headerProfilePic.setOnClickListener(profileClickListener);
+            sideNavHeaderBinding.headerProfilePicDynamic.setOnClickListener(profileClickListener);
         } else {
             sideNavHeaderBinding.headerUserName.setText("You're not logged in");
             sideNavHeaderBinding.headerUserEmail.setText("");
-            sideNavHeaderBinding.headerProfilePic.setImageResource(R.drawable.person_24);
+            
+            sideNavHeaderBinding.headerProfilePic.setVisibility(View.GONE);
+            sideNavHeaderBinding.headerProfilePicDynamic.setVisibility(View.VISIBLE);
+            sideNavHeaderBinding.headerProfilePicDynamic.setImageResource(R.drawable.person_24);
             
             setMenuItemVisible(R.id.side_nav_login, true);
             setMenuItemVisible(R.id.side_nav_profile, false);
@@ -327,6 +336,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void loadDynamicAvatar(String name) {
+        sideNavHeaderBinding.headerProfilePic.setVisibility(View.GONE);
+        sideNavHeaderBinding.headerProfilePicDynamic.setVisibility(View.VISIBLE);
+
         String initialsUrl = "https://ui-avatars.com/api/?name=" + Uri.encode(name) + "&background=random&color=fff&size=256";
         if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
             Glide.with(MainActivity.this)
@@ -334,7 +346,7 @@ public class MainActivity extends AppCompatActivity
                     .circleCrop()
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
-                    .into(sideNavHeaderBinding.headerProfilePic);
+                    .into(sideNavHeaderBinding.headerProfilePicDynamic);
         }
     }
 
@@ -344,6 +356,10 @@ public class MainActivity extends AppCompatActivity
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     Uri uri = result.getData().getData();
                     Log.i("ImageURI", uri.getPath());
+
+                    // We don't know yet if it's dynamic or real, but we usually show the selected one in real.
+                    sideNavHeaderBinding.headerProfilePic.setVisibility(View.VISIBLE);
+                    sideNavHeaderBinding.headerProfilePicDynamic.setVisibility(View.GONE);
 
                     if (!MainActivity.this.isFinishing() && !MainActivity.this.isDestroyed()) {
                         Glide.with(MainActivity.this)
