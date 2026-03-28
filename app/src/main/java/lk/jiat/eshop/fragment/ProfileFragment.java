@@ -1,8 +1,12 @@
 package lk.jiat.eshop.fragment;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -19,6 +23,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.util.UUID;
 
 import lk.jiat.eshop.R;
 import lk.jiat.eshop.adapter.ProfileAdapter;
@@ -32,6 +39,18 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore db;
     private User currentUser;
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    Uri imageUri = result.getData().getData();
+                    if (imageUri != null) {
+                        uploadImage(imageUri);
+                    }
+                }
+            }
+    );
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -52,6 +71,12 @@ public class ProfileFragment extends Fragment {
 
         binding.profileBtnUpdate.setOnClickListener(v -> {
             updateProfile();
+        });
+
+        binding.profileImageUpdateBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            imagePickerLauncher.launch(intent);
         });
     }
 
@@ -107,6 +132,26 @@ public class ProfileFragment extends Fragment {
                     .error(R.drawable.person_24)
                     .into(binding.profileImage);
         }
+    }
+
+    private void uploadImage(Uri imageUri) {
+        if (currentUser == null) return;
+
+        String imageId = UUID.randomUUID().toString();
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference("profile-images/" + imageId);
+
+        storageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    db.collection("users").document(currentUser.getUid()).update("profilePicUrl", imageId)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(getContext(), "Profile picture updated", Toast.LENGTH_SHORT).show();
+                                loadUserData();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void updateProfile() {

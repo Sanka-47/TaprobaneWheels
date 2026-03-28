@@ -382,6 +382,7 @@ public class MainActivity extends AppCompatActivity
                                         .update("profilePicUrl", imageId)
                                         .addOnSuccessListener(aVoid -> {
                                             Toast.makeText(MainActivity.this, "Profile image changed!", Toast.LENGTH_SHORT).show();
+                                            updateSideNavHeader();
                                         });
                             });
 

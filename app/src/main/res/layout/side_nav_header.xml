@@ -39,6 +39,16 @@
             app:strokeColor="@color/md_theme_primaryContainer"
             app:strokeWidth="2dp" />
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="bottom|end"
+            android:background="@color/md_theme_primaryContainer"
+            android:padding="4dp"
+            android:src="@drawable/ic_add_24"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:tint="@color/md_theme_primary" />
+
     </FrameLayout>
 
     <TextView
