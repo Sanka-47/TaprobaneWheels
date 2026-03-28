@@ -36,12 +36,12 @@
                     android:layout_weight="1"
                     android:hint="Search alloy wheels..."
                     android:drawableStart="@drawable/search_24"
-                    android:drawableTint="@android:color/white"
+                    android:drawableTint="@color/md_theme_onPrimary"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:textSize="14sp"
-                    android:textColor="@android:color/white"
-                    android:textColorHint="#CCCCCC"
+                    android:textColor="@color/md_theme_onPrimary"
+                    android:textColorHint="@color/md_theme_outlineVariant"
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:background="@drawable/custom_input_search" />
@@ -53,7 +53,7 @@
                     android:layout_marginStart="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/list_24"
-                    app:tint="@android:color/white" />
+                    app:tint="@color/md_theme_onPrimary" />
 
             </LinearLayout>
 
