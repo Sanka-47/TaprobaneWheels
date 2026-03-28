@@ -1,17 +1,20 @@
 package lk.jiat.eshop.activity;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +32,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -37,16 +43,17 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,7 +73,6 @@ import lk.jiat.eshop.fragment.ListingFragment;
 import lk.jiat.eshop.fragment.MessageFragment;
 import lk.jiat.eshop.fragment.NearbyShopsFragment;
 import lk.jiat.eshop.fragment.OrdersFragment;
-import lk.jiat.eshop.fragment.ProductDetailsFragment;
 import lk.jiat.eshop.fragment.ProfileFragment;
 import lk.jiat.eshop.fragment.SearchFragment;
 import lk.jiat.eshop.fragment.SettingsFragment;
@@ -86,6 +92,7 @@ public class MainActivity extends AppCompatActivity
     private BottomNavigationView bottomNavigationView;
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firebaseFirestore;
+    private ListenerRegistration notificationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +149,9 @@ public class MainActivity extends AppCompatActivity
         firebaseFirestore = FirebaseFirestore.getInstance();
 
         updateSideNavHeader();
+        checkNotificationPermission();
+        startNotificationListener();
+        updateFCMToken();
 
         // Search Functionality
         binding.textInputSearch.setOnEditorActionListener((v, actionId, event) -> {
@@ -158,6 +168,91 @@ public class MainActivity extends AppCompatActivity
         binding.btnFilter.setOnClickListener(v -> {
             showAdvancedSearchDialog();
         });
+    }
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+    }
+
+    private void updateFCMToken() {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            FirebaseMessaging.getInstance().getToken().addOnSuccessListener(token -> {
+                firebaseFirestore.collection("users").document(user.getUid())
+                        .update("fcmToken", token)
+                        .addOnSuccessListener(aVoid -> Log.d("FCM", "Token updated"))
+                        .addOnFailureListener(e -> Log.e("FCM", "Update failed", e));
+            });
+        }
+    }
+
+    private void startNotificationListener() {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            if (notificationListener != null) notificationListener.remove();
+
+            notificationListener = firebaseFirestore.collection("notifications")
+                    .whereEqualTo("userId", user.getUid())
+                    .whereEqualTo("isRead", false)
+                    .addSnapshotListener((snapshots, e) -> {
+                        if (e != null) {
+                            Log.w("MainActivity", "Listen failed.", e);
+                            return;
+                        }
+
+                        if (snapshots != null) {
+                            for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                                if (dc.getType() == DocumentChange.Type.ADDED) {
+                                    String title = dc.getDocument().getString("title");
+                                    String body = dc.getDocument().getString("body");
+                                    String docId = dc.getDocument().getId();
+                                    
+                                    showLocalNotification(title, body);
+                                    
+                                    // Optionally mark as read immediately or keep it for the notification screen
+                                    // firebaseFirestore.collection("notifications").document(docId).update("isRead", true);
+                                }
+                            }
+                        }
+                    });
+        }
+    }
+
+    private void showLocalNotification(String title, String body) {
+        String channelId = "eshop_notifications";
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(channelId, "EShop Notifications", NotificationManager.IMPORTANCE_HIGH);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.shopping_cart_24)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(pendingIntent);
+
+        notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (notificationListener != null) {
+            notificationListener.remove();
+        }
     }
 
     private void showAdvancedSearchDialog() {

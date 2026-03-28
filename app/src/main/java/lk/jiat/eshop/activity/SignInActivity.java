@@ -2,8 +2,7 @@ package lk.jiat.eshop.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.widget.Toast;
 
@@ -15,8 +14,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
-import lk.jiat.eshop.R;
 import lk.jiat.eshop.databinding.ActivitySignInBinding;
 
 public class SignInActivity extends AppCompatActivity {
@@ -70,16 +70,31 @@ public class SignInActivity extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
-                        updateUI(firebaseAuth.getCurrentUser());
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        if (user != null) {
+                            saveFCMToken(user.getUid());
+                        }
+                        updateUI(user);
                     } else {
                         Toast.makeText(SignInActivity.this, "Authentication failed", Toast.LENGTH_SHORT).show();
-                        //updateUI(null);
                     }
                 }
             });
         });
 
 
+    }
+
+    private void saveFCMToken(String uid) {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String token = task.getResult();
+                FirebaseFirestore.getInstance().collection("users").document(uid)
+                        .update("fcmToken", token)
+                        .addOnSuccessListener(aVoid -> Log.d("SignInActivity", "FCM token saved to Firestore"))
+                        .addOnFailureListener(e -> Log.e("SignInActivity", "Failed to save FCM token", e));
+            }
+        });
     }
 
     private void updateUI(FirebaseUser user) {
