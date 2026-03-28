@@ -3,6 +3,7 @@ package lk.jiat.eshop.fragment;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,9 +13,11 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -27,18 +30,31 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.TravelMode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import lk.jiat.eshop.R;
 import lk.jiat.eshop.databinding.FragmentNearbyShopsBinding;
 
 public class NearbyShopsFragment extends Fragment implements OnMapReadyCallback {
 
+    private static final String TAG = "NearbyShopsFragment";
     private FragmentNearbyShopsBinding binding;
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationClient;
     private String productName;
     private String productImage;
+    private LatLng userLocation;
+    private Polyline polyline;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -90,12 +106,22 @@ public class NearbyShopsFragment extends Fragment implements OnMapReadyCallback 
             @Override
             public void onSuccess(Location location) {
                 if (location != null) {
-                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
+                    userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 14f));
 
                     // Adding dummy tyre shops as examples (In real app, use Places API)
-                    addDummyTyreShops(currentLatLng);
+                    addDummyTyreShops(userLocation);
                 }
+            }
+        });
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                if (userLocation != null) {
+                    getDirections(userLocation, marker.getPosition());
+                }
+                return false;
             }
         });
 
@@ -110,6 +136,49 @@ public class NearbyShopsFragment extends Fragment implements OnMapReadyCallback 
                 if (mapIntent.resolveActivity(requireActivity().getPackageManager()) != null) {
                     startActivity(mapIntent);
                 }
+            }
+        });
+    }
+
+    private void getDirections(LatLng origin, LatLng destination) {
+        GeoApiContext context = new GeoApiContext.Builder()
+                .apiKey(getString(R.string.google_maps_key))
+                .build();
+
+        DirectionsApiRequest request = DirectionsApi.newRequest(context)
+                .origin(new com.google.maps.model.LatLng(origin.latitude, origin.longitude))
+                .destination(new com.google.maps.model.LatLng(destination.latitude, destination.longitude))
+                .mode(TravelMode.DRIVING);
+
+        request.setCallback(new com.google.maps.PendingResult.Callback<DirectionsResult>() {
+            @Override
+            public void onResult(DirectionsResult result) {
+                if (result.routes != null && result.routes.length > 0) {
+                    List<com.google.maps.model.LatLng> path = result.routes[0].overviewPolyline.decodePath();
+                    List<LatLng> newPath = new ArrayList<>();
+                    for (com.google.maps.model.LatLng coords : path) {
+                        newPath.add(new LatLng(coords.lat, coords.lng));
+                    }
+
+                    requireActivity().runOnUiThread(() -> {
+                        if (polyline != null) {
+                            polyline.remove();
+                        }
+                        polyline = mMap.addPolyline(new PolylineOptions()
+                                .addAll(newPath)
+                                .color(Color.BLUE)
+                                .width(10));
+                        Log.d(TAG, "Directions fetched and polyline added");
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                Log.e(TAG, "Failed to get directions", e);
+                requireActivity().runOnUiThread(() -> 
+                    Toast.makeText(getContext(), "Error fetching directions", Toast.LENGTH_SHORT).show()
+                );
             }
         });
     }
