@@ -136,6 +136,43 @@ public class CheckoutFragment extends Fragment {
         binding.shippingDetailsPostcode.setText("");
     }
 
+    private boolean validateShippingDetails() {
+        boolean isValid = true;
+        if (binding.shippingDetailsName.getText().toString().trim().isEmpty()) {
+            binding.shippingDetailsName.setError("Name is required");
+            isValid = false;
+        }
+        if (binding.shippingDetailsEmail.getText().toString().trim().isEmpty()) {
+            binding.shippingDetailsEmail.setError("Email is required");
+            isValid = false;
+        }
+        if (binding.shippingDetailsContact.getText().toString().trim().isEmpty()) {
+            binding.shippingDetailsContact.setError("Contact number is required");
+            isValid = false;
+        }
+        if (binding.shippingDetailsAddress1.getText().toString().trim().isEmpty()) {
+            binding.shippingDetailsAddress1.setError("Address is required");
+            isValid = false;
+        }
+        if (binding.shippingDetailsCity.getText().toString().trim().isEmpty()) {
+            binding.shippingDetailsCity.setError("City is required");
+            isValid = false;
+        }
+        if (binding.shippingDetailsPostcode.getText().toString().trim().isEmpty()) {
+            binding.shippingDetailsPostcode.setError("Postcode is required");
+            isValid = false;
+        }
+
+        if (!isValid) {
+            if (binding.shippingLayoutBody.getVisibility() == View.GONE) {
+                binding.shippingLayoutBody.setVisibility(View.VISIBLE);
+                binding.shippingLayoutBtn.setRotation(180f);
+            }
+            Toast.makeText(getContext(), "Please fill all required shipping details", Toast.LENGTH_SHORT).show();
+        }
+        return isValid;
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -174,31 +211,33 @@ public class CheckoutFragment extends Fragment {
         binding.checkoutBtnProceed.setOnClickListener(v -> {
 
             if (paymentActive) {
-                InitRequest req = new InitRequest();
-                req.setSandBox(true);
+                if (validateShippingDetails()) {
+                    InitRequest req = new InitRequest();
+                    req.setSandBox(true);
 
-                req.setMerchantId("1224412");
-                req.setMerchantSecret("NzE1MTAxNzcxMDMyNzI1NTM5MTIxNzcyNzgzNTM2ODk1NjcxODA=");
-                req.setCurrency("LKR");
-                req.setAmount(total);
-                req.setOrderId("ESOI-001");
+                    req.setMerchantId("1224412");
+                    req.setMerchantSecret("NzE1MTAxNzcxMDMyNzI1NTM5MTIxNzcyNzgzNTM2ODk1NjcxODA=");
+                    req.setCurrency("LKR");
+                    req.setAmount(total);
+                    req.setOrderId("ESOI-001");
 
-                req.setItemsDescription("");
+                    req.setItemsDescription("");
 
-                req.getCustomer().setFirstName(binding.shippingDetailsName.getText().toString());
-                req.getCustomer().setLastName("");
-                req.getCustomer().setEmail(binding.shippingDetailsEmail.getText().toString());
-                req.getCustomer().setPhone(binding.shippingDetailsContact.getText().toString());
-                req.getCustomer().getAddress().setAddress(binding.shippingDetailsAddress1.getText().toString());
-                req.getCustomer().getAddress().setCity(binding.shippingDetailsCity.getText().toString());
-                req.getCustomer().getAddress().setCountry("Sri Lanka");
+                    req.getCustomer().setFirstName(binding.shippingDetailsName.getText().toString());
+                    req.getCustomer().setLastName("");
+                    req.getCustomer().setEmail(binding.shippingDetailsEmail.getText().toString());
+                    req.getCustomer().setPhone(binding.shippingDetailsContact.getText().toString());
+                    req.getCustomer().getAddress().setAddress(binding.shippingDetailsAddress1.getText().toString());
+                    req.getCustomer().getAddress().setCity(binding.shippingDetailsCity.getText().toString());
+                    req.getCustomer().getAddress().setCountry("Sri Lanka");
 
-                //req.setNotifyUrl("https://eshop.requestcatcher.com/");
+                    //req.setNotifyUrl("https://eshop.requestcatcher.com/");
 
-                Intent intent = new Intent(getActivity(), PHMainActivity.class);
-                intent.putExtra(PHConstants.INTENT_EXTRA_DATA, req);
+                    Intent intent = new Intent(getActivity(), PHMainActivity.class);
+                    intent.putExtra(PHConstants.INTENT_EXTRA_DATA, req);
 
-                payhereLauncher.launch(intent);
+                    payhereLauncher.launch(intent);
+                }
             }
 
         });

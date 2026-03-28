@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -33,6 +34,7 @@ public class SettingsFragment extends Fragment {
     private static final String PREFS_NAME = "AppPrefs";
     private static final String KEY_NOTIFICATIONS = "notifications_enabled";
     private static final String KEY_REMEMBER_ME = "remember_me";
+    private static final String KEY_DARK_MODE = "dark_mode";
 
     private String pendingTitle;
     private String pendingMessage;
@@ -47,12 +49,12 @@ public class SettingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Shared Preferences Implementation
         SharedPreferences prefs = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         
         // Load saved values
         binding.switchNotifications.setChecked(prefs.getBoolean(KEY_NOTIFICATIONS, true));
         binding.switchRememberMe.setChecked(prefs.getBoolean(KEY_REMEMBER_ME, false));
+        binding.switchDarkMode.setChecked(prefs.getBoolean(KEY_DARK_MODE, false));
 
         // Save on change
         binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -65,19 +67,19 @@ public class SettingsFragment extends Fragment {
             checkAndSendNotification("Remember Me Updated", "Remember Me has been " + status);
         });
 
-        // 2. Internal Storage & Cache Management Implementation
+        binding.switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean(KEY_DARK_MODE, isChecked).apply();
+            if (isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+        });
+
         binding.btnClearCache.setOnClickListener(v -> {
             clearAppCache();
         });
 
-        // 3. Notifications Broadcast Implementation
-        /*
-        binding.btnTestNotification.setOnClickListener(v -> {
-            checkAndSendNotification("EShop Test Notification", "This is a broadcast notification triggered from Settings!");
-        });
-        */
-
-        // Example of Internal Storage usage: saving a simple log file
         saveLastSettingsVisit();
     }
 

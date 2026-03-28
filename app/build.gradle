@@ -51,6 +51,7 @@ dependencies {
     implementation libs.firebase.auth
     implementation libs.firebase.firestore
     implementation libs.firebase.storage
+    implementation libs.firebase.messaging
     implementation (libs.dotsindicator)
     implementation libs.payhere.android.sdk
     implementation libs.gson
@@ -58,5 +59,6 @@ dependencies {
 
     implementation libs.play.services.maps
     implementation libs.play.services.location
+    implementation libs.google.maps.services
 
 }

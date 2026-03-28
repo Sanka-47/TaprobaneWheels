@@ -18,6 +18,7 @@ preference = "1.2.1"
 photoview = "2.3.0"
 playServicesMaps = "19.0.0"
 playServicesLocation = "21.3.0"
+googleMapsServices = "2.2.0"
 
 [libraries]
 dotsindicator = { module = "com.tbuonomo:dotsindicator", version.ref = "dotsindicator" }
@@ -26,6 +27,7 @@ firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 firebase-storage = { module = "com.google.firebase:firebase-storage" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -42,6 +44,7 @@ preference = { group = "androidx.preference", name = "preference", version.ref =
 photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoview" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+google-maps-services = { module = "com.google.maps:google-maps-services", version.ref = "googleMapsServices" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
