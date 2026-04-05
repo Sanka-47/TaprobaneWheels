@@ -3,7 +3,7 @@
 TaprobaneWheels is a comprehensive solution for the alloy wheel retail industry, featuring a high-performance Android mobile application for consumers and a data-driven Web Admin Panel for business management.
 
 ## 📱 Mobile Application Features
-dsadsadsad
+dsadsadsad dsadadadsad
 The Android application provides a premium shopping experience tailored for wheel enthusiasts:
 
 - **Advanced Search & Filtering:** Users can find the perfect wheels by filtering via Brand, Color (with color-coded previews), and Rim Size.
